@@ -1,0 +1,237 @@
+# Reusable: workflow.yml (every push/PR) and release.yml (nightly) call this, so the build
+# steps live in one place. The four jobs run side by side and each installs only what it
+# needs; only `docker` waits, and then only for `test` and `web`.
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Release version (x.y.z). Empty = the version from pubspec.yaml.
+        type: string
+        default: ''
+      build-number:
+        type: string
+        default: ''
+      release:
+        description: Build release artifacts (signed split APKs, AAB, tarballs).
+        type: boolean
+        default: false
+      push-image:
+        type: boolean
+        default: false
+      image-tags:
+        description: Tags for ghcr.io/<repo>, one per line (docker/metadata-action).
+        type: string
+        default: type=ref,event=branch
+    secrets:
+      ANDROID_KEYSTORE_B64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
+
+env:
+  # The version is passed as a flag rather than committed to pubspec.yaml: no bump
+  # commit, no write access to main, no run that has to skip itself.
+  VERSION_FLAGS: >-
+    ${{ inputs.version != '' && format('--build-name={0}', inputs.version) || '' }}
+    ${{ inputs.build-number != '' && format('--build-number={0}', inputs.build-number) || '' }}
+
+jobs:
+  test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-flutter
+
+      # The generated files are committed, so the build jobs can skip codegen. This is
+      # where we guard that they match their source.
+      - name: Generated code is up to date
+        run: |
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- lib || {
+            echo "::error::Generated code is out of date: run 'flutter gen-l10n' and 'dart run build_runner build' and commit the result."
+            exit 1
+          }
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test --exclude-tags golden
+
+  linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Install dependencies from Apt
+        run: |
+          sudo apt-get update
+          # libsecret/jsoncpp: flutter_secure_storage.
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev \
+            libsecret-1-dev libjsoncpp-dev
+
+      - name: Build Linux
+        run: |
+          # shellcheck disable=SC2086
+          # VERSION_FLAGS is deliberately unquoted: zero to two separate flags.
+          flutter build linux --release $VERSION_FLAGS
+
+      - name: Pack tarball
+        if: inputs.release
+        run: |
+          # The .desktop file and the icon are included, so the app can be added to a menu.
+          cp linux/managevity.desktop build/linux/x64/release/bundle/
+          cp assets/icon/icon.png build/linux/x64/release/bundle/managevity.png
+          tar -C build/linux/x64/release/bundle -czf managevity-linux-x64.tar.gz .
+
+      - name: Upload Linux Build
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-build
+          path: ${{ inputs.release && 'managevity-linux-x64.tar.gz' || 'build/linux/x64/release/bundle/' }}
+
+  android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: zulu
+          cache: gradle
+      - uses: ./.github/actions/setup-flutter
+
+      # Without secrets (forks, or the keystore has not been set up yet) Gradle stays on
+      # debug signing; android/app/build.gradle.kts decides based on whether
+      # key.properties exists.
+      - name: Set up signing
+        if: inputs.release
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_B64 is missing — the APKs are signed with the debug key and cannot be installed as an update over a real release."
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > android/app/upload-keystore.jks
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } > android/key.properties
+
+      - name: Build APK
+        if: ${{ !inputs.release }}
+        run: |
+          # shellcheck disable=SC2086
+          flutter build apk --release $VERSION_FLAGS
+
+      - name: Build release APKs and app bundle
+        if: inputs.release
+        run: |
+          # shellcheck disable=SC2086
+          flutter build apk --release --split-per-abi $VERSION_FLAGS
+          # shellcheck disable=SC2086
+          flutter build apk --release $VERSION_FLAGS
+          # shellcheck disable=SC2086
+          flutter build appbundle --release $VERSION_FLAGS
+          mkdir -p dist
+          for f in build/app/outputs/flutter-apk/app-*-release.apk; do
+            abi=$(basename "$f" | sed -E 's/^app-(.*)-release\.apk$/\1/')
+            cp "$f" "dist/managevity-android-$abi.apk"
+          done
+          cp build/app/outputs/flutter-apk/app-release.apk dist/managevity-android-universal.apk
+          cp build/app/outputs/bundle/release/app-release.aab dist/managevity-android.aab
+
+      - name: Upload Android Build
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-apk
+          path: ${{ inputs.release && 'dist/' || 'build/app/outputs/flutter-apk/app-release.apk' }}
+
+  web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-flutter
+
+      # API_BASE=/api: in the browser everything goes through the proxy in the image,
+      # because the API sends no CORS headers.
+      - name: Build Web
+        run: |
+          # shellcheck disable=SC2086
+          flutter build web --release --wasm --no-web-resources-cdn \
+            --dart-define=API_BASE=/api $VERSION_FLAGS
+
+      - name: Upload Web Build
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-build
+          path: build/web/
+
+  docker:
+    name: Docker image
+    needs: [test, web]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download Web build
+        uses: actions/download-artifact@v8
+        with:
+          name: web-build
+          path: build/web
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        if: inputs.push-image
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: ${{ inputs.image-tags }}
+
+      # The image only copies files (no RUN), so adding arm64 costs no emulation.
+      # On PRs it is built but not pushed: a smoke test of the Dockerfile.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ inputs.push-image }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

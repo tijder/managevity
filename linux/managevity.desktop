@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Managevity
+Comment=Managevity for Sportivity — unofficial client
+Comment[nl]=Managevity for Sportivity — onofficiële client
+Exec=managevity
+Icon=managevity
+Categories=Sports;Utility;
+StartupWMClass=managevity
+Terminal=false

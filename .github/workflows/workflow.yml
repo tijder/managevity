@@ -1,0 +1,55 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore: [ "**.md", "doc/**", "LICENSE" ]
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore: [ "**.md", "doc/**", "LICENSE" ]
+
+# A new push to the same PR makes the previous run redundant; on main every run finishes,
+# because release.yml checks whether the commit was green.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # release.yml derives the version bump and the release notes from conventional commits;
+  # a subject that does not follow the convention silently costs a release its notes.
+  commit-lint:
+    name: Commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check the subjects against the convention
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bad=$(git log --no-merges --pretty='%s' "${BASE}..${HEAD}" |
+                grep -vP '^[a-z]+(\(.+\))?!?: .+' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::These commit subjects are not conventional commits:"
+            printf '  %s\n' "$bad"
+            echo "Expected: <type>[(scope)][!]: <description>  — see CONTRIBUTING.md"
+            exit 1
+          fi
+          echo "all commit subjects follow the convention"
+
+  build:
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      # Only main pushes an image; PRs (including forks, without secrets) just build it.
+      push-image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      image-tags: type=raw,value=main

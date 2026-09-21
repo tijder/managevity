@@ -1,0 +1,4 @@
+tags:
+  golden:
+    # Golden screenshots; only green on the machine that has just updated them.
+    # Excluded in CI.

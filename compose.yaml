@@ -1,0 +1,14 @@
+# To try it locally: first tool/build-image.sh, then `podman compose up`.
+services:
+  managevity:
+    image: managevity:dev
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # Set this to your own Nextcloud to use CalDAV sync in the browser.
+      NEXTCLOUD_UPSTREAM: ""
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:mode=1777

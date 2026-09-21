@@ -1,0 +1,69 @@
+name: managevity
+description: "Managevity for Sportivity — unofficial client, not affiliated with b.o.s.s."
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.0
+  # Pinned exactly so subosito/flutter-action can read it with flutter-version-file.
+  flutter: 3.47.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+  dio: ^5.11.1
+  hive_ce_flutter: ^2.3.4
+  auto_route: ^11.1.0
+  intl: ^0.20.3
+  url_launcher: ^6.3.2
+  flutter_secure_storage: ^11.2.0
+  device_calendar_plus: ^0.8.0
+  workmanager: ^0.10.10
+  qr_flutter: ^4.1.0
+  xml: ^7.0.1
+  share_plus: ^13.3.0
+  path_provider: ^2.1.6
+  http: ^1.6.0
+  flutter_localizations:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  skeletonizer: ^3.0.0
+  web: ^1.1.1
+  image_picker: ^1.2.3
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  auto_route_generator: ^10.6.0
+  build_runner: ^2.16.1
+  flutter_launcher_icons: ^0.14.4
+
+# Source: assets/icon/icon.svg (own design). After a change:
+#   magick -background none assets/icon/icon.svg assets/icon/icon.png   (same for _foreground)
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 24
+  adaptive_icon_background: "#2E7D6B"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/icon/icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#2E7D6B"
+    theme_color: "#2E7D6B"
+
+flutter:
+  generate: true
+  uses-material-design: true
+  assets:
+    - assets/icon/icon.png
+

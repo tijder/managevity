@@ -1,0 +1,4 @@
+# Everything may be indexed. The pages behind the login only show the sign-in screen to a
+# crawler; /about is the public page with the description of the app.
+User-agent: *
+Allow: /

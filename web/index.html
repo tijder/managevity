@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    The base href is replaced by the value of `--base-href` at build time. It has to start
+    and end with a slash.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+
+  <title>Managevity – book gym classes and sync them to your calendar</title>
+  <meta name="description" content="Managevity is a free, open-source app for gyms that use Sportivity: book classes on your phone or your computer and sync them to Nextcloud or any CalDAV calendar. No ads, no tracking. Unofficial.">
+  <meta name="keywords" content="Managevity, Sportivity, gym classes, book classes, sportlessen boeken, calendar sync, CalDAV, Nextcloud, Linux, web app, open source, privacy">
+  <meta name="application-name" content="Managevity">
+  <meta name="theme-color" content="#2E7D6B">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="index, follow">
+
+  <!-- Link previews (Open Graph / Twitter). URLs are relative on purpose: the app does not
+       know which host it is served from. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Managevity">
+  <meta property="og:title" content="Managevity – gym classes in your own calendar">
+  <meta property="og:description" content="Book your gym classes on your phone or your computer and sync them to your own calendar. Free, open source, no tracking. An unofficial client for gyms that use Sportivity.">
+  <meta property="og:image" content="icons/Icon-512.png">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:locale:alternate" content="nl_NL">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Managevity – gym classes in your own calendar">
+  <meta name="twitter:description" content="Book gym classes on any device and sync them to Nextcloud or any CalDAV calendar. Free, open source, no tracking.">
+  <meta name="twitter:image" content="icons/Icon-512.png">
+
+  <!-- Structured data: tells search engines this is an application, what it runs on and
+       that it costs nothing. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Managevity",
+    "alternateName": "Managevity for Sportivity",
+    "description": "An unofficial, open-source client for gyms that use Sportivity: book classes on a phone or a computer and sync them to Nextcloud or any CalDAV calendar. No ads, no analytics, no tracking.",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Android, Linux, Web",
+    "inLanguage": ["en", "nl"],
+    "isAccessibleForFree": true,
+    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "featureList": [
+      "Book, cancel and favourite gym classes",
+      "Runs on Android, Linux and in any browser",
+      "One-way calendar sync to Nextcloud, CalDAV or the device calendar",
+      "No ads, no analytics, no tracking",
+      "Built-in demo: sign in with demo / demo"
+    ]
+  }
+  </script>
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Managevity">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* The static text below is what a crawler, a link preview or a browser without
+       JavaScript sees; Flutter paints to a canvas, which none of them can read. It doubles
+       as the loading screen. */
+    #static-content {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem; line-height: 1.55;
+      color: #1b1f1e;
+    }
+    #static-content h1 { color: #2E7D6B; margin-bottom: .25rem; }
+    #static-content h2 { margin-top: 1.75rem; font-size: 1.15rem; }
+    #static-content .muted { color: #5a6663; font-size: .9rem; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #101413; }
+      #static-content { color: #e1e5e3; }
+      #static-content h1 { color: #7fd6bf; }
+      #static-content .muted { color: #a3aeab; }
+    }
+  </style>
+</head>
+<body>
+  <main id="static-content">
+    <h1>Managevity</h1>
+    <p><strong>Book your gym classes and get them into your own calendar.</strong>
+      An independent, open-source client for gyms that use Sportivity.</p>
+
+    <h2>Also on your computer</h2>
+    <p>Not just a phone app: Managevity runs on Android, on Linux, and in any browser on any
+      computer. Same features everywhere, with a layout that uses a wide screen.</p>
+
+    <h2>Privacy friendly</h2>
+    <p>No ads, no analytics, no tracking, and no server of our own. The app talks only to your
+      gym's Sportivity server and, if you turn it on, to your own calendar. Your password is
+      kept in your device's keychain and is never stored in a browser. The source code is open
+      for anyone to check.</p>
+
+    <h2>Syncs to your calendar</h2>
+    <p>Booked classes appear in your calendar and disappear when you cancel: straight to
+      Nextcloud or any other CalDAV server, or to a calendar on your phone. With the trainer,
+      the room, the address and an optional reminder.</p>
+
+    <h2>And the rest</h2>
+    <p>Timetable with filters, waiting lists, favourites, your class history, how busy the gym
+      is, invoices as PDF, your details and ID photo, news. Works offline with what was loaded
+      earlier. Dutch and English, light and dark.</p>
+
+    <h2>Try it without an account</h2>
+    <p>Sign in with username <code>demo</code> and password <code>demo</code> for a built-in
+      demo with made-up data. Nothing is really booked.</p>
+
+    <section lang="nl">
+      <h2>In het Nederlands</h2>
+      <p>Managevity is een gratis, opensource-app om je sportlessen te boeken bij sportscholen
+        die Sportivity gebruiken, op je telefoon én op je computer. Geboekte lessen
+        synchroniseren naar Nextcloud, een andere CalDAV-agenda of de agenda op je telefoon.
+        Geen advertenties, geen tracking. Proberen kan met gebruikersnaam en wachtwoord
+        <code>demo</code>.</p>
+    </section>
+
+    <p class="muted">Managevity is unofficial: it is not affiliated with or endorsed by
+      b.o.s.s. or Sportivity. Free software under the GPL-3.0 licence.</p>
+    <p class="muted"><a href="about">About this app</a> · Loading the app…</p>
+    <noscript><p><strong>This app needs JavaScript to run.</strong></p></noscript>
+  </main>
+
+  <script>
+    // Once Flutter has painted its first frame the static text has done its job.
+    window.addEventListener('flutter-first-frame', function () {
+      var el = document.getElementById('static-content');
+      if (el) el.remove();
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+name: Release
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (auto = derived from the commits since the last tag)
+        type: choice
+        default: auto
+        options: [auto, patch, minor, major]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Anything to release?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read     # gh run list
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+      version: ${{ steps.version.outputs.version }}
+      build: ${{ steps.version.outputs.build }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # tags and history: the version bump and the notes are derived from them
+
+      - name: Is there anything to release, and is it green?
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          prev=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          echo "prev=$prev" >> "$GITHUB_OUTPUT"
+          echo "release=false" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$prev" ] && [ "$(git rev-list --count "${prev}..HEAD")" -eq 0 ]; then
+            echo "::notice::no new commits since $prev — nothing to release."
+            exit 0
+          fi
+
+          # A red or still-running run blocks the release. No run at all is fine:
+          # a documentation-only commit does not start workflow.yml (paths-ignore), and
+          # the release runs the tests itself below anyway.
+          runs=$(gh run list --branch main --commit "$sha" --workflow workflow.yml \
+                   --json status,conclusion)
+          total=$(jq length <<<"$runs")
+          ok=$(jq '[.[] | select(.status == "completed" and .conclusion == "success")] | length' <<<"$runs")
+          if [ "$total" -gt 0 ] && [ "$ok" -eq 0 ]; then
+            echo "::notice::Build and Test is not green for $sha — not releasing."
+            exit 0
+          fi
+
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::releasing $sha (previous tag: ${prev:-none})."
+
+      - name: Work out the release version
+        id: version
+        if: steps.check.outputs.release == 'true'
+        env:
+          PREV: ${{ steps.check.outputs.prev }}
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          if [ -z "$PREV" ]; then
+            next=0.1.0
+            bump=initial
+          else
+            bump="$BUMP"
+            if [ "$bump" = auto ]; then
+              log=$(git log --no-merges --pretty='%s%n%b' "${PREV}..HEAD")
+              if grep -qP '^[a-z]+(\(.+\))?!:|^BREAKING[ -]CHANGE' <<<"$log"; then
+                bump='major'
+              elif grep -qP '^feat(\(.+\))?:' <<<"$log"; then
+                bump='minor'
+              else
+                bump='patch'
+              fi
+            fi
+            next=$(awk -F. -v b="$bump" '{
+              if (b == "major")      printf "%d.0.0\n", $1 + 1
+              else if (b == "minor") printf "%d.%d.0\n", $1, $2 + 1
+              else                   printf "%d.%d.%d\n", $1, $2, $3 + 1
+            }' <<<"${PREV#v}")
+          fi
+          # For Android the build number must always increase; the commit count does that.
+          build=$(git rev-list --count HEAD)
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "build=$build"  >> "$GITHUB_OUTPUT"
+          echo "::notice::releasing v$next+$build ($bump, since ${PREV:-the root commit})"
+
+  build:
+    needs: gate
+    if: needs.gate.outputs.release == 'true'
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+    with:
+      version: ${{ needs.gate.outputs.version }}
+      build-number: ${{ needs.gate.outputs.build }}
+      release: true
+      push-image: true
+      image-tags: |
+        type=raw,value=${{ needs.gate.outputs.version }}
+        type=raw,value=latest
+
+  publish:
+    name: GitHub Release
+    needs: [gate, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write   # tag + release
+    env:
+      VERSION: ${{ needs.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download the artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Collect the release files
+        run: |
+          mkdir dist
+          cp artifacts/android-apk/* dist/
+          cp artifacts/linux-build/managevity-linux-x64.tar.gz dist/
+          tar -C artifacts/web-build -czf dist/managevity-web.tar.gz .
+          (cd dist && sha256sum -- * > SHA256SUMS)
+          ls -l dist
+
+      - name: Write the release notes
+        run: |
+          prev=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          range="${prev:+$prev..}HEAD"
+          section() {  # title, regex on the commit type
+            local lines
+            lines=$(git log --no-merges --pretty='%s (%h)' "$range" | grep -P "$2" || true)
+            [ -z "$lines" ] && return
+            printf '## %s\n\n' "$1"
+            sed -E 's/^[a-z]+(\([^)]*\))?!?: /- /' <<<"$lines"
+            echo
+          }
+          {
+            section 'New'         '^feat(\(.+\))?!?:'
+            section 'Fixed'       '^fix(\(.+\))?!?:'
+            section 'Other'       '^(?!feat|fix|chore|ci|docs|test|build)[a-z]+(\(.+\))?!?:'
+            section 'Maintenance' '^(chore|ci|docs|test|build)(\(.+\))?!?:'
+            # The backticks are Markdown, not shell.
+            # shellcheck disable=SC2016
+            printf '## Image\n\n`ghcr.io/%s:%s`\n' "$GITHUB_REPOSITORY" "$VERSION"
+          } > notes.md
+          cat notes.md
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: v${{ env.VERSION }}
+          body_path: notes.md
+          files: dist/*
+          fail_on_unmatched_files: true

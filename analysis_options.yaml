@@ -1,0 +1,15 @@
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - web/**
+    - linux/**
+    - lib/l10n/app_localizations*.dart
+    - "**/*.gr.dart"
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+
+formatter:
+  page_width: 100

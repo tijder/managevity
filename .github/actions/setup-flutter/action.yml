@@ -1,0 +1,23 @@
+name: Setup Flutter
+description: Flutter from pubspec.yaml, pub cache and dependencies — shared by all jobs.
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        flutter-version-file: pubspec.yaml
+        # Caches the SDK download (~1 min per run).
+        cache: true
+
+    - name: Cache pub dependencies
+      uses: actions/cache@v6
+      with:
+        path: ~/.pub-cache
+        # No restore-keys: a cache from an older pubspec.lock can contain half-installed
+        # packages, and pub does not always repair those cleanly.
+        key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+
+    - name: Install dependencies
+      shell: bash
+      run: flutter pub get

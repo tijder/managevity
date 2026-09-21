@@ -1,0 +1,55 @@
+# Written to /etc/nginx/conf.d/default.conf by envsubst at startup.
+
+# The bootstrap files have no hash in their name and must never get stuck in a cache.
+# A single map instead of an add_header per location: an add_header in a location switches
+# off all add_headers of the server block above it.
+map $uri $cache_control {
+    default                                                          "public, max-age=3600";
+    ~^/(index\.html|flutter_bootstrap\.js|flutter_service_worker\.js|version\.json)?$  "no-cache";
+}
+
+server {
+    # Dual-stack: probes and Services may come in over IPv6.
+    listen 8080;
+    listen [::]:8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+    # Relative redirects: the outside world does not know the internal port 8080.
+    absolute_redirect off;
+    client_max_body_size 5m;
+
+    # Resolve hostnames again on each request instead of once at startup.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=60s;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    # Cross-origin isolation: without these two the wasm renderer falls back to a single thread.
+    add_header Cross-Origin-Opener-Policy same-origin always;
+    add_header Cross-Origin-Embedder-Policy credentialless always;
+    add_header Cache-Control $cache_control;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location /api/ {
+        set $sportivity ${SPORTIVITY_UPSTREAM};
+        rewrite ^/api/(.*)$ /SportivityAppV3/$1 break;
+        proxy_pass $sportivity;
+        include /etc/nginx/conf.d/proxy-common.inc;
+    }
+
+    # Empty as long as NEXTCLOUD_UPSTREAM is not set; see 18-dav-proxy.sh.
+    include /etc/nginx/conf.d/dav.inc;
+
+    location / {
+        # SPA: unknown paths are routes of the app.
+        try_files $uri $uri/ /index.html;
+    }
+}

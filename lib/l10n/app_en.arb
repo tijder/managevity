@@ -1,0 +1,298 @@
+{
+  "@@locale": "en",
+  "appTitle": "Managevity",
+  "appSubtitle": "Unofficial client for Sportivity",
+  "disclaimer": "Not affiliated with or endorsed by b.o.s.s. or Sportivity.",
+  "loginUser": "Email or username",
+  "loginPassword": "Password",
+  "loginRemember": "Stay signed in",
+  "loginRememberHint": "Stores your password in this device's keychain so an expired session renews itself.",
+  "loginRememberWeb": "Your password is never stored in the browser.",
+  "loginButton": "Sign in",
+  "loginForgot": "Forgot password?",
+  "loginForgotSent": "Request sent. Check your email.",
+  "loginForgotNeedsUser": "Enter your email or username first.",
+  "fieldRequired": "Required",
+  "locationTitle": "Choose your location",
+  "locationNone": "No locations found.",
+  "tabSchedule": "Schedule",
+  "tabMyLessons": "My lessons",
+  "tabBusy": "Busyness",
+  "tabMore": "More",
+  "today": "Today",
+  "scheduleEmpty": "No lessons on this day.",
+  "scheduleFilter": "Filter by activity",
+  "scheduleFilterAll": "All",
+  "myLessonsEmpty": "You have no booked lessons.",
+  "lessonBook": "Book",
+  "lessonJoinWaitingList": "Join waiting list",
+  "lessonCancel": "Cancel booking",
+  "lessonCancelConfirm": "Cancel this booking?",
+  "lessonBooked": "Booked",
+  "lessonWaitingList": "Waiting list",
+  "lessonFull": "Full",
+  "lessonPast": "This lesson is over.",
+  "lessonTrainer": "Trainer",
+  "lessonRoom": "Room",
+  "lessonLike": "Favourite",
+  "lessonBuyTitle": "This lesson costs money",
+  "lessonBuyUnknownAmount": "This lesson is not covered by your membership. Booking it means you will be charged.",
+  "lessonBuyConfirm": "Buy and book",
+  "actionDone": "Done",
+  "actionFailed": "Failed",
+  "back": "Back",
+  "retry": "Retry",
+  "close": "Close",
+  "save": "Save",
+  "errorGeneric": "Something went wrong",
+  "busyTitle": "Busyness",
+  "busyEmpty": "No busyness data.",
+  "busyWeek": "Typical week",
+  "busyDay": "Today by hour",
+  "moreNews": "News",
+  "moreNotifications": "Notifications",
+  "moreInvoices": "Invoices",
+  "moreProfile": "My details",
+  "moreMemberships": "Memberships",
+  "moreFavourites": "Favourite lessons",
+  "moreContact": "Contact",
+  "moreRules": "House rules",
+  "moreSync": "Calendar sync",
+  "moreLocation": "Change location",
+  "moreLogout": "Sign out",
+  "moreAbout": "About this app",
+  "listEmpty": "Nothing to show.",
+  "invoiceOpen": "Open PDF",
+  "invoiceMail": "Email to me",
+  "profileAddress": "Address",
+  "profileHouseNumber": "House number",
+  "profileAddition": "Addition",
+  "profileZip": "Postcode",
+  "profileCity": "City",
+  "profilePhone": "Phone",
+  "profileMobile": "Mobile",
+  "profileEmail": "Email",
+  "profileBalance": "Balance",
+  "profileSaved": "Details saved",
+  "membershipActive": "Active",
+  "membershipInactive": "Inactive",
+  "membershipUntil": "Runs until",
+  "membershipVisitsLeft": "Visits left",
+  "membershipCreditsLeft": "Booking credits left",
+  "membershipUnlimited": "Unlimited",
+  "membershipAddons": "Add-ons",
+  "membershipReadOnly": "Changing, freezing or cancelling a membership is only possible in the official app or at the desk.",
+  "addonOn": "On",
+  "addonOff": "Off",
+  "syncTarget": "Sync to",
+  "syncOff": "Off",
+  "syncDevice": "Calendar on this device",
+  "syncDeviceHint": "A calendar account on your phone, for example a Nextcloud calendar via DAVx5.",
+  "syncCalDav": "CalDAV (Nextcloud)",
+  "syncCalDavHint": "Straight to the server, without going through the device.",
+  "syncServerUrl": "Server URL",
+  "syncServerUrlHint": "https://cloud.example.org",
+  "syncUsername": "Username",
+  "syncAppPassword": "App password",
+  "syncAppPasswordHint": "Create an app password in Nextcloud under Settings → Security. Do not use your normal password.",
+  "syncFindCalendars": "Find calendars",
+  "syncChooseCalendar": "Choose a calendar",
+  "syncNoCalendars": "No writable calendars found.",
+  "syncCurrent": "Current calendar",
+  "syncNow": "Sync now",
+  "syncLastRun": "Last sync",
+  "syncNever": "Never",
+  "syncExplain": "One way: your booked lessons appear in the calendar and disappear when cancelled. The app only touches events it created itself.",
+  "syncWebNeedsProxy": "In the browser CalDAV only works if this site's administrator configured a Nextcloud server.",
+  "syncResult": "{created} new, {updated} updated, {deleted} removed",
+  "@syncResult": {
+    "placeholders": {
+      "created": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      },
+      "deleted": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonSpots": "{count, plural, =0{No spots} =1{1 spot} other{{count} spots}}",
+  "@lessonSpots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonBuyAmount": "This lesson is not covered by your membership and costs {amount}.",
+  "@lessonBuyAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "busyMorning": "Morning",
+  "busyAfternoon": "Afternoon",
+  "busyEvening": "Evening",
+  "busyQuiet": "Quiet",
+  "busyNormal": "Average",
+  "busyBusy": "Busy",
+  "busyWeekHint": "Compared with the busiest moment of the week.",
+  "invoiceFilterAll": "All",
+  "invoiceFilterOpen": "Outstanding",
+  "invoicesNoneOpen": "Everything is paid.",
+  "invoiceStatusOpen": "Outstanding",
+  "invoiceStatusPaid": "Paid",
+  "invoicesOpenTotal": "{count, plural, =1{1 invoice outstanding} other{{count} invoices outstanding}}",
+  "@invoicesOpenTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invoiceFetching": "Fetching PDF…",
+  "invoiceSavedTo": "Saved to {path}",
+  "@invoiceSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "syncReminder": "Reminder",
+  "syncReminderNone": "None",
+  "syncReminderMinutes": "{minutes} minutes before",
+  "@syncReminderMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "myLessonsUpcoming": "Upcoming",
+  "myLessonsHistory": "History",
+  "myLessonsHistoryEmpty": "No earlier lessons found.",
+  "eventWaitingList": "Note: you are on the waiting list.",
+  "eventSpots": "Participants: at most {max}",
+  "@eventSpots": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "moreSectionLessons": "Lessons",
+  "moreSectionGym": "Gym",
+  "moreSectionAccount": "Account",
+  "moreSectionApp": "App",
+  "lessonWhen": "When",
+  "lessonParticipants": "Participants",
+  "lessonAbout": "About this lesson",
+  "lessonSpotsOfMax": "{spots} of {max} spots free",
+  "@lessonSpotsOfMax": {
+    "placeholders": {
+      "spots": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "membershipPrice": "Price",
+  "membershipLocation": "Location",
+  "invoiceChartTitle": "Per month",
+  "invoiceChartTotal": "{amount} in the last {months} months",
+  "@invoiceChartTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "invoiceChartPaid": "Paid",
+  "invoiceChartOpen": "Outstanding",
+  "errorNotLoggedIn": "You are not signed in.",
+  "errorLoginFailed": "Sign-in failed.",
+  "errorTokenRejected": "Signed in, but the server rejects the session.",
+  "errorNetwork": "No connection to the server.",
+  "errorServer": "The server returned an error ({status}).",
+  "@errorServer": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "errorLessonNotFound": "Lesson not found.",
+  "errorNoPdf": "No PDF received.",
+  "errorCalendarUnavailable": "The calendar is not available.",
+  "errorCalendarPermission": "No access to the device calendar.",
+  "errorCalendarAuth": "The calendar server rejects the credentials.",
+  "errorCalendarNotFound": "No CalDAV server found at this address.",
+  "errorCalendarFailed": "The calendar server returned an error ({status}).",
+  "@errorCalendarFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "refresh": "Refresh",
+  "photoChange": "Change photo",
+  "photoCamera": "Take a photo",
+  "photoGallery": "Choose from gallery",
+  "photoFile": "Choose a file",
+  "photoConfirmTitle": "Use this photo?",
+  "photoConfirmBody": "This replaces the ID photo your gym has of you. It may be used at the desk or the entrance gate to recognise you: pick a clear photo of your face.",
+  "photoUpload": "Upload",
+  "photoUploaded": "Photo updated",
+  "photoInvalid": "This file is not an image that can be read.",
+  "errorUnexpected": "Something unexpected went wrong. Please try again.",
+  "errorRefreshFailed": "Refresh failed: {reason}",
+  "@errorRefreshFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "demoBanner": "Demo environment: made-up data, nothing is really booked.",
+  "offlineBanner": "Offline: showing what was loaded earlier.",
+  "syncFailedFor": "{subject}: {reason}",
+  "syncRemoveFailed": "Could not remove an event from the calendar",
+  "@syncFailedFor": {
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutTitle": "About Managevity",
+  "aboutLink": "About this app",
+  "aboutIntro": "Book your gym classes and get them into your own calendar. An independent, open-source client for gyms that use Sportivity.",
+  "aboutFeatureDesktopTitle": "Also on your computer",
+  "aboutFeatureDesktopBody": "Not just a phone app: it runs on Android, on Linux, and in any browser on any computer. Same features everywhere, and wide screens get a layout that uses the space.",
+  "aboutFeaturePrivacyTitle": "Privacy friendly",
+  "aboutFeaturePrivacyBody": "No ads, no analytics, no tracking, and no server of our own: the app talks only to your gym's Sportivity server and, if you turn it on, to your own calendar. Your password is kept in your device's keychain and is never stored in a browser. The source code is open for anyone to check.",
+  "aboutFeatureCalendarTitle": "Syncs to your calendar",
+  "aboutFeatureCalendarBody": "Booked classes appear in your calendar and disappear when you cancel: straight to Nextcloud or any other CalDAV server, or to a calendar on your phone. With the trainer, the room, the address and an optional reminder. It only ever touches events it created itself.",
+  "aboutFeatureMoreTitle": "And the rest",
+  "aboutFeatureMoreBody": "Timetable with filters, waiting lists, favourites, your class history with who taught it, how busy the gym is, invoices as PDF with a monthly chart, your details and ID photo, news. Works offline with what was loaded earlier. Dutch and English, light and dark.",
+  "aboutDemoTitle": "Try it without an account",
+  "aboutDemoBody": "Sign in with username demo and password demo for a built-in demo with made-up data. Nothing is really booked.",
+  "aboutDemoButton": "Open the demo",
+  "aboutLicences": "Open-source licences",
+  "aboutSource": "Free software under the GPL-3.0 licence.",
+  "aboutWebNote": "In the web version, requests pass through the proxy of whoever hosts that website."
+}
