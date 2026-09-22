@@ -159,6 +159,16 @@ class DemoServer implements HttpClientAdapter {
         return {'Response': 'Succes'};
       }(),
       ('GET', 'OptIn') => {'Response': 'Succes', ..._optIn},
+      ('GET', 'Credits/GetCreditOptions') => {
+        'Response': 'Succes',
+        'CreditOptions': [
+          for (final amount in [5, 10, 20, 50])
+            {'Amount': '€$amount', 'Info': '', 'OriginalAmount': amount},
+        ],
+      },
+      // Nobody pays anything in the demo: the answer a real server gives when it refuses.
+      ('GET', 'Payment/GetLink' || 'Payment/GetCreditLink' || 'Payment/GetCreditLinkSportCredit') =>
+        {'Response': 'Demo: nothing is paid in the demo.', 'Warning': true},
       ('POST', 'OptIn') => () {
         _optIn = {
           for (final key in ['OptIn', 'OptInCalls', 'OptInWhatsapp']) key: body[key] == true,

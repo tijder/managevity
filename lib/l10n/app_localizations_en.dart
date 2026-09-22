@@ -734,4 +734,39 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(state, {'on': 'on', 'other': 'off'});
     return 'Saved: $what $_temp0.';
   }
+
+  @override
+  String get balanceTitle => 'Credit';
+
+  @override
+  String get balanceTopUp => 'Top up';
+
+  @override
+  String get balanceTopUpChoose => 'How much do you want to add?';
+
+  @override
+  String balanceTopUpConfirm(String amount) {
+    return 'You top up your credit by $amount.';
+  }
+
+  @override
+  String get paymentInBrowser =>
+      'You pay in your browser, on the payment page of your gym. Come back to the app afterwards.';
+
+  @override
+  String get paymentToPage => 'To the payment page';
+
+  @override
+  String get paymentOpened => 'Payment page opened. This screen refreshes when you come back.';
+
+  @override
+  String get paymentCouldNotOpen => 'The payment page could not be opened.';
+
+  @override
+  String get invoicesPay => 'Pay';
+
+  @override
+  String invoicesPayConfirm(String amount) {
+    return 'You pay the outstanding amount of $amount.';
+  }
 }

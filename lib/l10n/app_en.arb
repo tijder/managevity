@@ -374,5 +374,29 @@
         "type": "String"
       }
     }
+  },
+  "balanceTitle": "Credit",
+  "balanceTopUp": "Top up",
+  "balanceTopUpChoose": "How much do you want to add?",
+  "balanceTopUpConfirm": "You top up your credit by {amount}.",
+  "@balanceTopUpConfirm": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentInBrowser": "You pay in your browser, on the payment page of your gym. Come back to the app afterwards.",
+  "paymentToPage": "To the payment page",
+  "paymentOpened": "Payment page opened. This screen refreshes when you come back.",
+  "paymentCouldNotOpen": "The payment page could not be opened.",
+  "invoicesPay": "Pay",
+  "invoicesPayConfirm": "You pay the outstanding amount of {amount}.",
+  "@invoicesPayConfirm": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   }
 }

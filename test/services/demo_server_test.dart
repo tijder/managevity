@@ -166,4 +166,11 @@ void main() {
       'Exampleton',
     );
   });
+
+  test('payments: amounts to choose from, but nothing is ever paid in the demo', () async {
+    final location = (await api.locations()).single.id;
+    expect(await api.creditOptions(location), hasLength(4));
+    await expectLater(api.paymentLink(location), throwsA(isA<SportivityException>()));
+    await expectLater(api.creditLink(location, 10), throwsA(isA<SportivityException>()));
+  });
 }

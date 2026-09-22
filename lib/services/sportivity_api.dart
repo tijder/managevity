@@ -11,6 +11,7 @@ import '../models/lesson.dart';
 import '../models/location.dart';
 import '../models/membership.dart';
 import '../models/news_item.dart';
+import '../models/payment.dart';
 import '../models/profile_settings.dart';
 import '../models/session.dart';
 import '../utils/errors.dart';
@@ -456,6 +457,50 @@ class SportivityApi {
       },
     ),
   );
+
+  // ── Payments ──────────────────────────────────────────────────────────────
+  //
+  // These only *ask* for a payment page; paying happens there, in the browser, with the
+  // gym's payment provider. The app never calls them without a confirmation that shows the
+  // amount (see widgets/confirm_action.dart).
+
+  /// What the payment endpoints get as `DeviceType`. The spec lists no values and they
+  /// cannot be tried without starting a payment. "Web": after paying, the provider sends
+  /// you back to a web page, not into the official app.
+  static const _deviceType = 'Web';
+
+  Future<List<CreditOption>> creditOptions(int locationId) async => _items(
+    await _get('Credits/GetCreditOptions', {'LocationId': locationId}),
+    'CreditOptions',
+    CreditOption.tryFromJson,
+  );
+
+  /// The page to pay what is outstanding.
+  Future<Uri> paymentLink(int locationId) async => _paymentPage(
+    await _get('Payment/GetLink', {'LocationId': locationId, 'DeviceType': _deviceType}),
+  );
+
+  /// The page to top up the credit by [amount]; [sportCredits] for gyms that work with
+  /// sport credits rather than money.
+  Future<Uri> creditLink(int locationId, num amount, {bool sportCredits = false}) async =>
+      _paymentPage(
+        await _get(sportCredits ? 'Payment/GetCreditLinkSportCredit' : 'Payment/GetCreditLink', {
+          'LocationId': locationId,
+          'Amount': amount,
+          'DeviceType': _deviceType,
+        }),
+      );
+
+  /// `Sisow.SisowLink` from the answer; only a web address is accepted.
+  Uri _paymentPage(Json body) {
+    final message = asString(body['Response']);
+    final link = asString(asMap(body['Sisow'])?['SisowLink']);
+    final uri = link == null ? null : Uri.tryParse(link);
+    if (asBool(body['Warning']) || uri == null || !{'https', 'http'}.contains(uri.scheme)) {
+      throw SportivityException(AppError.requestFailed, serverMessage: message);
+    }
+    return uri;
+  }
 
   // ── Transport ─────────────────────────────────────────────────────────────
 

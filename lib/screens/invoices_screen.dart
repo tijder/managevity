@@ -8,7 +8,10 @@ import '../utils/errors.dart';
 import '../models/invoice.dart';
 import '../providers/content_providers.dart';
 import '../providers/services.dart';
+import '../providers/session_provider.dart';
 import '../utils/pdf_opener.dart';
+import '../widgets/confirm_action.dart';
+import '../widgets/payment_page.dart';
 import '../widgets/async_view.dart';
 import '../widgets/invoice_chart.dart';
 import '../widgets/responsive.dart';
@@ -23,8 +26,28 @@ class InvoicesScreen extends ConsumerStatefulWidget {
   ConsumerState<InvoicesScreen> createState() => _InvoicesScreenState();
 }
 
-class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
+class _InvoicesScreenState extends ConsumerState<InvoicesScreen> with RefreshAfterPayment {
   bool _onlyOpen = false;
+
+  @override
+  void onReturn() => ref.invalidate(invoicesProvider);
+
+  Future<void> _pay(String total) async {
+    final l10n = context.l10n;
+    final ok = await confirmAction(
+      context,
+      title: l10n.invoicesPay,
+      lines: [l10n.invoicesPayConfirm(total), l10n.paymentInBrowser],
+      confirmLabel: l10n.paymentToPage,
+    );
+    if (!ok || !mounted) return;
+    final opened = await openPaymentPage(
+      context,
+      ref,
+      () => ref.read(apiProvider).paymentLink(ref.read(locationIdProvider)),
+    );
+    if (opened) paymentStarted();
+  }
 
   Future<void> _open(Invoice invoice) async {
     final l10n = context.l10n;
@@ -85,7 +108,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
         child: ResponsiveListView(
           maxWidth: 720,
           children: [
-            _Summary(open: open),
+            _Summary(open: open, onPay: _pay),
             if (all.value case final invoices?) InvoiceChart(invoices: invoices, openIds: openIds),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -128,9 +151,12 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
 }
 
 class _Summary extends StatelessWidget {
-  const _Summary({required this.open});
+  const _Summary({required this.open, required this.onPay});
 
   final AsyncValue<List<Invoice>> open;
+
+  /// Pays everything outstanding; gets the total as shown.
+  final void Function(String total) onPay;
 
   @override
   Widget build(BuildContext context) {
@@ -141,25 +167,44 @@ class _Summary extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final clear = invoices.isEmpty;
     final total = invoices.fold<double>(0, (sum, i) => sum + (i.amountValue ?? 0));
+    final totalText = NumberFormat.simpleCurrency(locale: locale, name: 'EUR').format(total);
 
     return Card(
       color: clear ? scheme.primaryContainer : scheme.errorContainer,
-      child: ListTile(
-        leading: Icon(
-          clear ? Icons.check_circle_outline : Icons.error_outline,
-          color: clear ? scheme.onPrimaryContainer : scheme.onErrorContainer,
-        ),
-        title: Text(
-          clear ? l10n.invoicesNoneOpen : l10n.invoicesOpenTotal(invoices.length),
-          style: TextStyle(color: clear ? scheme.onPrimaryContainer : scheme.onErrorContainer),
-        ),
-        trailing: clear || total == 0
-            ? null
-            : Text(
-                NumberFormat.simpleCurrency(locale: locale, name: 'EUR').format(total),
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: scheme.onErrorContainer),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: Icon(
+              clear ? Icons.check_circle_outline : Icons.error_outline,
+              color: clear ? scheme.onPrimaryContainer : scheme.onErrorContainer,
+            ),
+            title: Text(
+              clear ? l10n.invoicesNoneOpen : l10n.invoicesOpenTotal(invoices.length),
+              style: TextStyle(color: clear ? scheme.onPrimaryContainer : scheme.onErrorContainer),
+            ),
+            trailing: clear || total == 0
+                ? null
+                : Text(
+                    totalText,
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(color: scheme.onErrorContainer),
+                  ),
+          ),
+          // Paying is for the whole outstanding amount: the API has no per-invoice payment.
+          if (!clear && total > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: () => onPay(totalText),
+                  icon: const Icon(Icons.payment),
+                  label: Text(l10n.invoicesPay),
+                ),
               ),
+            ),
+        ],
       ),
     );
   }

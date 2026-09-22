@@ -6,6 +6,8 @@ import 'package:managevity/models/customer.dart';
 import 'package:managevity/models/guest_pass.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/location.dart';
+import 'package:managevity/models/membership.dart';
+import 'package:managevity/models/payment.dart';
 import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/models/sync_settings.dart';
@@ -204,6 +206,39 @@ class FakeSportivityApi extends SportivityApi {
     String addition = '',
   }) async =>
       zipCode == '0000 XX' ? null : const AddressLookup(street: 'Station Road', city: 'Exampleton');
+
+  var membershipList = <Membership>[
+    const Membership(id: 1, description: 'Unlimited', active: true, unlimitedVisits: true),
+  ];
+  var addonList = <Addon>[];
+
+  @override
+  Future<List<Membership>> memberships(int locationId) async => [...membershipList];
+
+  @override
+  Future<List<Addon>> addons(int locationId) async => [...addonList];
+
+  /// What was asked for: ('invoices', null) or ('credit', amount).
+  final paymentRequests = <(String, num?)>[];
+  static final paymentPage = Uri.parse('https://pay.example.org/checkout');
+
+  @override
+  Future<List<CreditOption>> creditOptions(int locationId) async => const [
+    CreditOption(label: '€10', amount: 10),
+    CreditOption(label: '€20', amount: 20),
+  ];
+
+  @override
+  Future<Uri> paymentLink(int locationId) async {
+    paymentRequests.add(('invoices', null));
+    return paymentPage;
+  }
+
+  @override
+  Future<Uri> creditLink(int locationId, num amount, {bool sportCredits = false}) async {
+    paymentRequests.add(('credit', amount));
+    return paymentPage;
+  }
 
   @override
   Future<BookingResult> cancelLesson(int lessonId, int locationId) async {

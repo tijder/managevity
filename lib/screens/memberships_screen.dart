@@ -4,7 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/l10n.dart';
+import '../models/payment.dart';
 import '../providers/content_providers.dart';
+import '../providers/services.dart';
+import '../providers/session_provider.dart';
+import '../widgets/confirm_action.dart';
+import '../widgets/payment_page.dart';
 import '../widgets/async_view.dart';
 import '../widgets/responsive.dart';
 import '../widgets/placeholders.dart';
@@ -44,6 +49,7 @@ class MembershipsScreen extends ConsumerWidget {
             final scheme = theme.colorScheme;
             return ResponsiveListView(
               children: [
+                const _BalanceCard(),
                 if (memberships.isEmpty) Center(child: Text(l10n.listEmpty)),
                 for (final m in memberships)
                   Card(
@@ -159,6 +165,79 @@ class MembershipsScreen extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// The credit, with topping up when the gym offers amounts for it.
+class _BalanceCard extends ConsumerStatefulWidget {
+  const _BalanceCard();
+
+  @override
+  ConsumerState<_BalanceCard> createState() => _BalanceCardState();
+}
+
+class _BalanceCardState extends ConsumerState<_BalanceCard> with RefreshAfterPayment {
+  @override
+  void onReturn() => ref.invalidate(userContentProvider);
+
+  Future<void> _topUp(List<CreditOption> options, {required bool sportCredits}) async {
+    final l10n = context.l10n;
+    final option = await showDialog<CreditOption>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l10n.balanceTopUpChoose),
+        children: [
+          for (final o in options)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, o),
+              child: ListTile(
+                title: Text(o.label),
+                subtitle: o.info == null ? null : Text(o.info!),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (option == null || !mounted) return;
+    final ok = await confirmAction(
+      context,
+      title: l10n.balanceTopUp,
+      lines: [l10n.balanceTopUpConfirm(option.label), l10n.paymentInBrowser],
+      confirmLabel: l10n.paymentToPage,
+    );
+    if (!ok || !mounted) return;
+    final opened = await openPaymentPage(
+      context,
+      ref,
+      () => ref
+          .read(apiProvider)
+          .creditLink(ref.read(locationIdProvider), option.amount, sportCredits: sportCredits),
+    );
+    if (opened) paymentStarted();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final customer = ref.watch(userContentProvider).value?.customer;
+    final options = ref.watch(creditOptionsProvider).value ?? const [];
+    final balance = customer?.balance;
+    if (balance == null && options.isEmpty) return const SizedBox.shrink();
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.account_balance_wallet_outlined),
+        title: Text(l10n.balanceTitle),
+        subtitle: balance == null
+            ? null
+            : Text(balance, style: Theme.of(context).textTheme.titleMedium),
+        trailing: options.isEmpty
+            ? null
+            : FilledButton.tonal(
+                onPressed: () => _topUp(options, sportCredits: customer?.hasSportsCredits ?? false),
+                child: Text(l10n.balanceTopUp),
+              ),
       ),
     );
   }

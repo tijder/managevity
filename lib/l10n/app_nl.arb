@@ -217,5 +217,15 @@
   "optInEmail": "E-mail en nieuwsbrieven",
   "optInCalls": "Telefoon",
   "optInWhatsapp": "WhatsApp",
-  "optInSaved": "Opgeslagen: {what} {state, select, on{aan} other{uit}}."
+  "optInSaved": "Opgeslagen: {what} {state, select, on{aan} other{uit}}.",
+  "balanceTitle": "Tegoed",
+  "balanceTopUp": "Opwaarderen",
+  "balanceTopUpChoose": "Hoeveel wil je opwaarderen?",
+  "balanceTopUpConfirm": "Je waardeert je tegoed op met {amount}.",
+  "paymentInBrowser": "Je betaalt in je browser, op de betaalpagina van je sportschool. Kom daarna terug naar de app.",
+  "paymentToPage": "Naar de betaalpagina",
+  "paymentOpened": "Betaalpagina geopend. Dit scherm ververst zodra je terugkomt.",
+  "paymentCouldNotOpen": "De betaalpagina kon niet worden geopend.",
+  "invoicesPay": "Betalen",
+  "invoicesPayConfirm": "Je betaalt het openstaande bedrag van {amount}."
 }

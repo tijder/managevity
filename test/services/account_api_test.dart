@@ -115,4 +115,54 @@ void main() {
       expect(sent.single.$2, {'LocationId': 7, 'Language': 'en_GB'});
     });
   });
+
+  group('payments', () {
+    Map<String, Object?> page(String link) => {
+      'Response': 'Succes',
+      'Warning': false,
+      'Sisow': {'SisowLink': link},
+    };
+
+    test('paying asks for a page, with DeviceType Web, and returns the link', () async {
+      final client = api((_, _) => json(page('https://pay.example.org/abc')));
+      expect(await client.paymentLink(7), Uri.parse('https://pay.example.org/abc'));
+      expect(sent.single.$1.path, 'Payment/GetLink');
+      expect(sent.single.$1.queryParameters, {'LocationId': 7, 'DeviceType': 'Web'});
+    });
+
+    test('topping up sends the amount, to the sport-credit variant where needed', () async {
+      final client = api((_, _) => json(page('https://pay.example.org/abc')));
+      await client.creditLink(7, 20);
+      await client.creditLink(7, 5, sportCredits: true);
+      expect(sent.map((r) => r.$1.path), [
+        'Payment/GetCreditLink',
+        'Payment/GetCreditLinkSportCredit',
+      ]);
+      expect(sent.first.$1.queryParameters['Amount'], 20);
+    });
+
+    test('a refusal, no link, or a link that is not a web page: an error', () async {
+      for (final body in [
+        {'Response': 'Geen openstaand bedrag', 'Warning': true},
+        {'Response': 'Succes', 'Warning': false},
+        page('javascript:alert(1)'),
+      ]) {
+        final client = api((_, _) => json(body));
+        await expectLater(client.paymentLink(7), throwsA(isA<SportivityException>()));
+      }
+    });
+
+    test('credit options: the label and the number that goes back', () async {
+      final client = api(
+        (_, _) => json({
+          'Response': 'Succes',
+          'CreditOptions': [
+            {'Amount': '€10', 'Info': '', 'OriginalAmount': 10},
+          ],
+        }),
+      );
+      final option = (await client.creditOptions(7)).single;
+      expect((option.label, option.amount), ('€10', 10));
+    });
+  });
 }

@@ -15,6 +15,7 @@ Widget testApp(
   required FakeSportivityApi api,
   FakeCredentialStore? credentials,
   FakeSettingsService? settings,
+  List<Uri>? opened,
 }) {
   final store = credentials ?? FakeCredentialStore(session: const Session(token: 'fake'));
   api.session ??= store.session;
@@ -26,6 +27,11 @@ Widget testApp(
       cacheServiceProvider.overrideWithValue(FakeCacheService()),
       syncIndexStoreProvider.overrideWithValue(MemorySyncIndexStore()),
       syncLockProvider.overrideWithValue(noSyncLock),
+      // Never a real browser from a test: record what would have been opened.
+      openExternalProvider.overrideWithValue((uri) async {
+        opened?.add(uri);
+        return true;
+      }),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,

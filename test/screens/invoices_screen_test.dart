@@ -33,6 +33,7 @@ Invoice invoice(int id, String date, {String status = 'Paid'}) => Invoice(
 
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
+  _payTests();
 
   Future<void> pump(WidgetTester tester, List<Invoice> invoices) async {
     await tester.pumpWidget(
@@ -72,6 +73,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('30-07-2026'), findsNothing);
     expect(find.text('Everything is paid.'), findsNWidgets(2));
+  });
+}
+
+void _payTests() {
+  testWidgets('paying: the amount first, the payment page only after yes', (tester) async {
+    final api = _Api([invoice(3, '27-08-2026', status: 'Open')]);
+    final opened = <Uri>[];
+    await tester.pumpWidget(
+      testApp(
+        const _WithSession(child: InvoicesScreen()),
+        api: api,
+        opened: opened,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Pay'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('outstanding amount of €70.00'), findsOneWidget);
+    await tester.tap(find.text('Back'));
+    await tester.pumpAndSettle();
+    expect(api.paymentRequests, isEmpty);
+
+    await tester.tap(find.text('Pay'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('To the payment page'));
+    await tester.pumpAndSettle();
+    expect(api.paymentRequests, [('invoices', null)]);
+    expect(opened, [FakeSportivityApi.paymentPage]);
+  });
+
+  testWidgets('nothing outstanding: no pay button', (tester) async {
+    await tester.pumpWidget(
+      testApp(const _WithSession(child: InvoicesScreen()), api: _Api([invoice(1, '30-07-2026')])),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Pay'), findsNothing);
   });
 }
 

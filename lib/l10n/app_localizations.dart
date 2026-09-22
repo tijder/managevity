@@ -1400,6 +1400,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved: {what} {state, select, on{on} other{off}}.'**
   String optInSaved(String what, String state);
+
+  /// No description provided for @balanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get balanceTitle;
+
+  /// No description provided for @balanceTopUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up'**
+  String get balanceTopUp;
+
+  /// No description provided for @balanceTopUpChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'How much do you want to add?'**
+  String get balanceTopUpChoose;
+
+  /// No description provided for @balanceTopUpConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'You top up your credit by {amount}.'**
+  String balanceTopUpConfirm(String amount);
+
+  /// No description provided for @paymentInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay in your browser, on the payment page of your gym. Come back to the app afterwards.'**
+  String get paymentInBrowser;
+
+  /// No description provided for @paymentToPage.
+  ///
+  /// In en, this message translates to:
+  /// **'To the payment page'**
+  String get paymentToPage;
+
+  /// No description provided for @paymentOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment page opened. This screen refreshes when you come back.'**
+  String get paymentOpened;
+
+  /// No description provided for @paymentCouldNotOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment page could not be opened.'**
+  String get paymentCouldNotOpen;
+
+  /// No description provided for @invoicesPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get invoicesPay;
+
+  /// No description provided for @invoicesPayConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay the outstanding amount of {amount}.'**
+  String invoicesPayConfirm(String amount);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

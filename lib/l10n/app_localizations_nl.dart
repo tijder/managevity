@@ -734,4 +734,39 @@ class AppLocalizationsNl extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(state, {'on': 'aan', 'other': 'uit'});
     return 'Opgeslagen: $what $_temp0.';
   }
+
+  @override
+  String get balanceTitle => 'Tegoed';
+
+  @override
+  String get balanceTopUp => 'Opwaarderen';
+
+  @override
+  String get balanceTopUpChoose => 'Hoeveel wil je opwaarderen?';
+
+  @override
+  String balanceTopUpConfirm(String amount) {
+    return 'Je waardeert je tegoed op met $amount.';
+  }
+
+  @override
+  String get paymentInBrowser =>
+      'Je betaalt in je browser, op de betaalpagina van je sportschool. Kom daarna terug naar de app.';
+
+  @override
+  String get paymentToPage => 'Naar de betaalpagina';
+
+  @override
+  String get paymentOpened => 'Betaalpagina geopend. Dit scherm ververst zodra je terugkomt.';
+
+  @override
+  String get paymentCouldNotOpen => 'De betaalpagina kon niet worden geopend.';
+
+  @override
+  String get invoicesPay => 'Betalen';
+
+  @override
+  String invoicesPayConfirm(String amount) {
+    return 'Je betaalt het openstaande bedrag van $amount.';
+  }
 }

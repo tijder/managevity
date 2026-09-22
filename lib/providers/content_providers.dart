@@ -8,6 +8,7 @@ import '../models/heatmap.dart';
 import '../models/invoice.dart';
 import '../models/membership.dart';
 import '../models/news_item.dart';
+import '../models/payment.dart';
 import '../models/profile_settings.dart';
 import 'services.dart';
 import 'session_provider.dart';
@@ -81,4 +82,8 @@ final optInProvider = FutureProvider.autoDispose<OptInSettings>(
 
 final countriesProvider = FutureProvider.autoDispose<List<Country>>(
   (ref) => ref.watch(apiProvider).countries(ref.watch(locationIdProvider)),
+);
+
+final creditOptionsProvider = FutureProvider.autoDispose<List<CreditOption>>(
+  (ref) => ref.watch(apiProvider).creditOptions(ref.watch(locationIdProvider)),
 );
