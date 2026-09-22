@@ -4,7 +4,9 @@
 //   SPORTIVITY_USER=… SPORTIVITY_PASSWORD=… dart run tool/probe.dart
 //   (or the same two lines in .env — which is in .gitignore)
 //
-// Only does GETs plus the login. Nothing is booked, changed or registered.
+// Only does GETs plus the login. Nothing is booked, changed or registered. Endpoints that
+// could start something (Payment/*: a payment link may open a transaction) or that send
+// data somewhere (IBANCheck) are deliberately left out.
 //
 // Output in probe-out/ (gitignored, contains personal data):
 //   raw/<name>.json   the literal response
@@ -32,6 +34,10 @@ Future<void> main(List<String> args) async {
   // The status words are what the client has to recognize (booked / waiting list / …).
   final bookingStatuses = <String>{};
   shapes['_bookingStatuses'] = bookingStatuses;
+  // Per endpoint, which statuses occur: "on the list of my lessons" versus "somewhere in
+  // the schedule" tells booked apart from waiting list.
+  final statusesBy = <String, Set<String>>{};
+  shapes['_bookingStatusesBy'] = statusesBy;
 
   Future<Object?> record(String name, http.Response r) async {
     File('${out.path}/$name.json').writeAsStringSync(r.body);
@@ -49,6 +55,8 @@ Future<void> main(List<String> args) async {
       if (body is Map && body['Response'] is String) 'responseText': body['Response'],
     };
     _collect(body, 'BookingStatus', bookingStatuses);
+    _collect(body, 'BookingStatus', statusesBy.putIfAbsent(name, () => <String>{}));
+    if (statusesBy[name]!.isEmpty) statusesBy.remove(name);
     stdout.writeln('${r.statusCode}  $name');
     return body;
   }
@@ -140,13 +148,18 @@ Future<void> main(List<String> args) async {
         'StartDate': entry.value(now),
         'EndDate': entry.value(end),
       });
-      final list = ids is Map ? ids['LessonIdsLists'] : null;
-      if (list is List && list.isNotEmpty) {
+      // The thin list can be empty while the rich one (LessonDefinitions) is full.
+      final list = [
+        for (final key in ['LessonIdsLists', 'LessonDefinitions'])
+          if (ids is Map && ids[key] is List) ...ids[key] as List,
+      ];
+      if (list.isNotEmpty) {
         shapes['_dateFormat'] = entry.key;
+        // A wide window, so that booked and waiting-list lessons show up with their status.
         await get('CustomerLessons', '/Lesson/GetCustomerLessons', {
           'LocationId': '$locationId',
-          'StartDate': entry.value(now),
-          'EndDate': entry.value(end),
+          'StartDate': entry.value(now.subtract(const Duration(days: 30))),
+          'EndDate': entry.value(now.add(const Duration(days: 56))),
         });
         final lessonId = _firstInt(list.first);
         if (lessonId != null) {
@@ -157,6 +170,87 @@ Future<void> main(List<String> args) async {
     }
     await get('Heatmap', '/Heatmap', {'LocationId': '$locationId'});
     await get('HeatmapPerDay', '/Heatmap/PerDay', {'LocationId': '$locationId'});
+
+    // ── The rest of the API, all read-only ──────────────────────────────────
+    final loc = {'LocationId': '$locationId'};
+    // These came back empty without a LocationId.
+    await get('CustomerAddons_withId', '/AddOn/CustomerAddons', loc);
+    await get('Button_withId', '/Button', loc);
+    await get('OptIn_withId', '/OptIn', loc);
+
+    await get('CreditOptions', '/Credits/GetCreditOptions', loc);
+    await get('CancellationReasons', '/ChangeMembership/CancellationReasons', loc);
+    await get('GuestPasses', '/TogetherEntrance', loc);
+    await get('GuestCheckMembership', '/TogetherEntrance/CheckMembership', loc);
+    await get('Countries', '/UserContent/Countries', loc);
+
+    final content = await get('UserContent_withId', '/UserContent', loc);
+    final customer = content is Map ? content['Customer'] : null;
+    if (customer is Map) {
+      final zip = customer['ZipCode'], number = _firstInt(customer['HouseNumber']);
+      if (zip is String && zip.isNotEmpty && number != null) {
+        await get('AddressValid', '/UserContent/AdressValid', {
+          ...loc,
+          'ZipCode': zip,
+          'HouseNumber': '$number',
+        });
+      }
+    }
+
+    for (final language in ['nl', 'en']) {
+      final definitions = await get(
+        'MembershipDefinitions_$language',
+        '/MembershipDefinition/MembershipDefinitions',
+        {...loc, 'Language': language},
+      );
+      if (language != 'nl') continue;
+      final list = definitions is Map ? definitions['MembershipDefinitions'] : null;
+      final definitionId = list is List && list.isNotEmpty
+          ? _firstIntOf(list.first, [
+              'MembershipDefinitionId',
+              'MembershipDefinitionID',
+              'Id',
+              '_id',
+            ])
+          : null;
+      shapes['_membershipDefinitionIdFound'] = definitionId != null;
+      if (definitionId != null) {
+        final def = {...loc, 'Language': language, 'MembershipDefinitionId': '$definitionId'};
+        final start = now.add(const Duration(days: 7)).toIso8601String().substring(0, 10);
+        await get('MembershipConditions', '/MembershipDefinition/Conditions', def);
+        await get('MembershipFirstCosts', '/MembershipDefinition/FirstCosts', {
+          ...def,
+          'StartDate': start,
+          'IsAction': 'false',
+          'UseNoDeposits': 'false',
+        });
+        await get('MembershipDefinitionAddons', '/MembershipDefinition/Addons', {
+          ...def,
+          'StartDate': start,
+          'Promotion': 'false',
+        });
+      }
+    }
+    for (final type in ['GeneralConditions', 'PrivacyStatement', 'HouseRules']) {
+      await get('ConditionByType_$type', '/MembershipDefinition/ConditionByType', {
+        ...loc,
+        'Language': 'nl',
+        'ConditionType': type,
+      });
+    }
+
+    final own = memberships is Map ? memberships['Memberships'] : null;
+    if (own is List && own.isNotEmpty) {
+      final membershipId = _firstIntOf(own.first, ['MembershipID', 'MembershipId']);
+      if (membershipId != null) {
+        await get('MembershipAddon', '/AddOn/MembershipAddon', {'MembershipId': '$membershipId'});
+        await get('MembershipUpgrade', '/MembershipDefinition/Upgrade', {
+          ...loc,
+          'Language': 'nl',
+          'MembershipId': '$membershipId',
+        });
+      }
+    }
   }
 
   _writeShapes(shapes);
@@ -214,6 +308,15 @@ int? _firstLocationId(Object? body) {
   if (body is! Map) return null;
   for (final v in body.values) {
     if (v is List && v.isNotEmpty) return _firstInt(v.first);
+  }
+  return null;
+}
+
+int? _firstIntOf(Object? v, List<String> keys) {
+  if (v is! Map) return null;
+  for (final key in keys) {
+    final hit = _firstInt(v[key]);
+    if (hit != null) return hit;
   }
   return null;
 }
