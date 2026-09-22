@@ -52,6 +52,7 @@ const _pages = {
   'invoices': '/invoices',
   'memberships': '/memberships',
   'profile': '/profile',
+  'guests': '/guests',
   'news': '/news',
   'rules': '/info?rules=true',
   'favourites': '/favourites',

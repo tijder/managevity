@@ -637,4 +637,53 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get aboutWebNote =>
       'In de webversie lopen verzoeken via de proxy van wie die website host.';
+
+  @override
+  String get confirmSureTitle => 'Weet je het zeker?';
+
+  @override
+  String get confirmIrreversible => 'Dit kun je vanuit de app niet ongedaan maken.';
+
+  @override
+  String get moreGuests => 'Gasten';
+
+  @override
+  String get guestsEmpty => 'Geen gasten aangemeld.';
+
+  @override
+  String get guestsNotAllowed => 'Je kunt nu geen gast meenemen.';
+
+  @override
+  String get guestAdd => 'Gast aanmelden';
+
+  @override
+  String get guestName => 'Naam';
+
+  @override
+  String get guestNameRequired => 'Vul een naam in';
+
+  @override
+  String get guestEmail => 'E-mail (optioneel)';
+
+  @override
+  String get guestMobile => 'Mobiel (optioneel)';
+
+  @override
+  String get guestDate => 'Datum van bezoek';
+
+  @override
+  String guestAddConfirm(String name, String date) {
+    return '$name wordt aangemeld als je gast op $date.';
+  }
+
+  @override
+  String get guestRemove => 'Verwijderen';
+
+  @override
+  String guestRemoveConfirm(String name) {
+    return '$name verwijderen uit je gasten?';
+  }
+
+  @override
+  String get guestVisited => 'Geweest';
 }

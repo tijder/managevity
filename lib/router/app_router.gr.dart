@@ -59,6 +59,22 @@ class FavouritesRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [GuestsScreen]
+class GuestsRoute extends PageRouteInfo<void> {
+  const GuestsRoute({List<PageRouteInfo>? children})
+    : super(GuestsRoute.name, initialChildren: children);
+
+  static const String name = 'GuestsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const GuestsScreen();
+    },
+  );
+}
+
+/// generated route for
 /// [InfoScreen]
 class InfoRoute extends PageRouteInfo<InfoRouteArgs> {
   InfoRoute({Key? key, bool rules = false, List<PageRouteInfo>? children})

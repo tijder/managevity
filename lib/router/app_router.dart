@@ -6,6 +6,7 @@ import '../providers/session_provider.dart';
 import '../screens/about_screen.dart';
 import '../screens/busy_screen.dart';
 import '../screens/favourites_screen.dart';
+import '../screens/guests_screen.dart';
 import '../screens/info_screen.dart';
 import '../screens/invoices_screen.dart';
 import '../screens/lesson_detail_screen.dart';
@@ -55,6 +56,7 @@ class AppRouter extends RootStackRouter {
       AutoRoute(path: '/profile', page: ProfileRoute.page, guards: [guard]),
       AutoRoute(path: '/memberships', page: MembershipsRoute.page, guards: [guard]),
       AutoRoute(path: '/invoices', page: InvoicesRoute.page, guards: [guard]),
+      AutoRoute(path: '/guests', page: GuestsRoute.page, guards: [guard]),
     ];
   }
 }

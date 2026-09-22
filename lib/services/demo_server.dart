@@ -28,6 +28,8 @@ class DemoServer implements HttpClientAdapter {
   final _waiting = <int>{};
   final _liked = <int>{};
   String? _photoBase64;
+  final _guests = <Map<String, Object?>>[];
+  var _nextGuestId = 1;
   var _contact = <String, Object?>{
     'Address': 'Station Road',
     'HouseNumber': '12',
@@ -143,6 +145,13 @@ class DemoServer implements HttpClientAdapter {
       },
       ('GET', 'CustomerPhoto') => {'Response': 'OK', 'Succes': true, 'PhotoBase64': _photoBase64},
       ('POST', 'CustomerPhoto') => _setPhoto(body),
+      ('GET', 'TogetherEntrance') => {
+        'Response': 'Succes',
+        'Warning': false,
+        'TogetherEntranceApps': _guests,
+      },
+      ('GET', 'TogetherEntrance/CheckMembership') => {'Response': 'Succes', 'Warning': false},
+      ('POST', 'TogetherEntrance') => _guest(body),
       _ => {'Response': 'Not available in the demo'},
     };
   }
@@ -312,6 +321,29 @@ class DemoServer implements HttpClientAdapter {
   Map<String, Object?> _setPhoto(Map<String, dynamic> body) {
     _photoBase64 = body['PhotoBase64'] as String?;
     return {'Succes': true, 'Response': 'Photo updated (demo).'};
+  }
+
+  Map<String, Object?> _guest(Map<String, dynamic> body) {
+    if (body['Delete'] == true) {
+      final before = _guests.length;
+      _guests.removeWhere((g) => g['TogetherEntranceID'] == body['TogetherEntranceID']);
+      final removed = _guests.length < before;
+      return {
+        'Succes': removed,
+        'Response': removed ? 'Guest removed (demo).' : 'Guest not found.',
+      };
+    }
+    final name = '${body['FullnameGuest'] ?? ''}'.trim();
+    if (name.isEmpty) return {'Succes': false, 'Response': 'A guest needs a name.'};
+    final id = _nextGuestId++;
+    _guests.add({
+      'TogetherEntranceID': id,
+      'FullnameGuest': name,
+      'EmailGuest': body['EmailGuest'],
+      'MobilePhoneGuest': body['MobilePhoneGuest'],
+      'DateVisitGuest': body['DateVisitGuest'],
+    });
+    return {'Succes': true, 'Response': 'Guest signed up (demo).', 'TogetherEntranceID': id};
   }
 
   Map<String, Object?> _memberships() => {

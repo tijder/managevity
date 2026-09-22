@@ -1,6 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+
 import 'package:managevity/models/customer.dart';
+import 'package:managevity/models/guest_pass.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/location.dart';
 import 'package:managevity/models/session.dart';
@@ -39,8 +42,23 @@ Lesson lessonFixture({
   canUseWaitingList: canUseWaitingList,
 );
 
+/// Refuses every request: a method the fake does not override must fail in a test, never
+/// quietly reach the real server with a made-up token.
+class _NoNetwork implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) => throw StateError('FakeSportivityApi does not fake ${options.method} ${options.path}');
+
+  @override
+  void close({bool force = false}) {}
+}
+
 class FakeSportivityApi extends SportivityApi {
-  FakeSportivityApi({this.lessons = const [], this.loginError});
+  FakeSportivityApi({this.lessons = const [], this.loginError})
+    : super(dio: Dio()..httpClientAdapter = _NoNetwork());
 
   List<Lesson> lessons;
   final SportivityException? loginError;
@@ -131,6 +149,27 @@ class FakeSportivityApi extends SportivityApi {
         l.id == lessonId ? l.copyWith(bookingStatus: const BookingStatus('Booked')) : l,
     ];
     return const BookingResult(success: true, message: 'Booked');
+  }
+
+  final guests = <GuestPass>[];
+  var guestAllowed = const GuestAllowance(allowed: true);
+
+  @override
+  Future<List<GuestPass>> guestPasses(int locationId) async => [...guests];
+
+  @override
+  Future<GuestAllowance> guestAllowance(int locationId) async => guestAllowed;
+
+  @override
+  Future<String?> addGuest(int locationId, NewGuest guest) async {
+    guests.add(GuestPass(id: guests.length + 1, name: guest.name, visitDate: guest.visitDate));
+    return 'Guest signed up';
+  }
+
+  @override
+  Future<String?> deleteGuest(int locationId, GuestPass guest) async {
+    guests.removeWhere((g) => g.id == guest.id);
+    return 'Guest removed';
   }
 
   @override

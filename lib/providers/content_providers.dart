@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/customer.dart';
+import '../models/guest_pass.dart';
 import '../models/heatmap.dart';
 import '../models/invoice.dart';
 import '../models/membership.dart';
@@ -63,4 +64,12 @@ final contactHtmlProvider = FutureProvider.autoDispose<String?>(
 
 final requirementsHtmlProvider = FutureProvider.autoDispose<String?>(
   (ref) => ref.watch(apiProvider).requirementsHtml(ref.watch(locationIdProvider)),
+);
+
+final guestPassesProvider = FutureProvider.autoDispose<List<GuestPass>>(
+  (ref) => ref.watch(apiProvider).guestPasses(ref.watch(locationIdProvider)),
+);
+
+final guestAllowanceProvider = FutureProvider.autoDispose<GuestAllowance>(
+  (ref) => ref.watch(apiProvider).guestAllowance(ref.watch(locationIdProvider)),
 );

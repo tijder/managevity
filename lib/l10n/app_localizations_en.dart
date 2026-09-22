@@ -637,4 +637,53 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aboutWebNote =>
       'In the web version, requests pass through the proxy of whoever hosts that website.';
+
+  @override
+  String get confirmSureTitle => 'Are you sure?';
+
+  @override
+  String get confirmIrreversible => 'This cannot be undone from the app.';
+
+  @override
+  String get moreGuests => 'Guests';
+
+  @override
+  String get guestsEmpty => 'No guests signed up.';
+
+  @override
+  String get guestsNotAllowed => 'You cannot bring a guest right now.';
+
+  @override
+  String get guestAdd => 'Sign up a guest';
+
+  @override
+  String get guestName => 'Name';
+
+  @override
+  String get guestNameRequired => 'Enter a name';
+
+  @override
+  String get guestEmail => 'Email (optional)';
+
+  @override
+  String get guestMobile => 'Mobile (optional)';
+
+  @override
+  String get guestDate => 'Date of visit';
+
+  @override
+  String guestAddConfirm(String name, String date) {
+    return '$name is signed up as your guest for $date.';
+  }
+
+  @override
+  String get guestRemove => 'Remove';
+
+  @override
+  String guestRemoveConfirm(String name) {
+    return 'Remove $name from your guests?';
+  }
+
+  @override
+  String get guestVisited => 'Visited';
 }

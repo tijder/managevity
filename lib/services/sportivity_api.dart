@@ -384,6 +384,45 @@ class SportivityApi {
     GuestPass.tryFromJson,
   );
 
+  Future<GuestAllowance> guestAllowance(int locationId) async {
+    final body = await _get('TogetherEntrance/CheckMembership', {'LocationId': locationId});
+    return GuestAllowance(allowed: !asBool(body['Warning']), message: asString(body['Response']));
+  }
+
+  /// Signs up a guest. Returns the server's message.
+  Future<String?> addGuest(int locationId, NewGuest guest) async => _outcome(
+    await _send(
+      'POST',
+      'TogetherEntrance',
+      data: {
+        'FullnameGuest': guest.name,
+        'EmailGuest': guest.email,
+        'MobilePhoneGuest': guest.mobile,
+        'DateVisitGuest': _date(guest.visitDate),
+        'LocationId': locationId,
+        'Delete': false,
+        'TogetherEntranceID': 0,
+      },
+    ),
+  );
+
+  /// Takes a guest off the list again. Returns the server's message.
+  Future<String?> deleteGuest(int locationId, GuestPass guest) async => _outcome(
+    await _send(
+      'POST',
+      'TogetherEntrance',
+      data: {
+        'FullnameGuest': guest.name,
+        'EmailGuest': guest.email ?? '',
+        'MobilePhoneGuest': guest.mobile ?? '',
+        'DateVisitGuest': guest.visitDate == null ? '' : _date(guest.visitDate!),
+        'LocationId': locationId,
+        'Delete': true,
+        'TogetherEntranceID': guest.id,
+      },
+    ),
+  );
+
   // ── Transport ─────────────────────────────────────────────────────────────
 
   Future<Json> _get(String path, Map<String, Object?> query) => _send('GET', path, query: query);
@@ -456,6 +495,16 @@ class SportivityApi {
       );
     }
     return body;
+  }
+
+  /// The outcome of an action. The server reports a refusal in the body, as `Succes: false`
+  /// or (where there is no Succes) `Warning: true`, with the reason in Message or Response.
+  /// Throws that reason; returns it otherwise.
+  String? _outcome(Json body) {
+    final message = asString(body['Message']) ?? asString(body['Response']);
+    final failed = body.containsKey('Succes') ? !asBool(body['Succes']) : asBool(body['Warning']);
+    if (failed) throw SportivityException(AppError.requestFailed, serverMessage: message);
+    return message;
   }
 
   bool _isTokenRejected(Json body) =>

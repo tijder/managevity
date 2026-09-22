@@ -1238,6 +1238,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'In the web version, requests pass through the proxy of whoever hosts that website.'**
   String get aboutWebNote;
+
+  /// No description provided for @confirmSureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure?'**
+  String get confirmSureTitle;
+
+  /// No description provided for @confirmIrreversible.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone from the app.'**
+  String get confirmIrreversible;
+
+  /// No description provided for @moreGuests.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get moreGuests;
+
+  /// No description provided for @guestsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No guests signed up.'**
+  String get guestsEmpty;
+
+  /// No description provided for @guestsNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot bring a guest right now.'**
+  String get guestsNotAllowed;
+
+  /// No description provided for @guestAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up a guest'**
+  String get guestAdd;
+
+  /// No description provided for @guestName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get guestName;
+
+  /// No description provided for @guestNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get guestNameRequired;
+
+  /// No description provided for @guestEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email (optional)'**
+  String get guestEmail;
+
+  /// No description provided for @guestMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile (optional)'**
+  String get guestMobile;
+
+  /// No description provided for @guestDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of visit'**
+  String get guestDate;
+
+  /// No description provided for @guestAddConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is signed up as your guest for {date}.'**
+  String guestAddConfirm(String name, String date);
+
+  /// No description provided for @guestRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get guestRemove;
+
+  /// No description provided for @guestRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from your guests?'**
+  String guestRemoveConfirm(String name);
+
+  /// No description provided for @guestVisited.
+  ///
+  /// In en, this message translates to:
+  /// **'Visited'**
+  String get guestVisited;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -305,5 +305,37 @@
   "aboutDemoButton": "Open the demo",
   "aboutLicences": "Open-source licences",
   "aboutSource": "Free software under the GPL-3.0 licence.",
-  "aboutWebNote": "In the web version, requests pass through the proxy of whoever hosts that website."
+  "aboutWebNote": "In the web version, requests pass through the proxy of whoever hosts that website.",
+  "confirmSureTitle": "Are you sure?",
+  "confirmIrreversible": "This cannot be undone from the app.",
+  "moreGuests": "Guests",
+  "guestsEmpty": "No guests signed up.",
+  "guestsNotAllowed": "You cannot bring a guest right now.",
+  "guestAdd": "Sign up a guest",
+  "guestName": "Name",
+  "guestNameRequired": "Enter a name",
+  "guestEmail": "Email (optional)",
+  "guestMobile": "Mobile (optional)",
+  "guestDate": "Date of visit",
+  "guestAddConfirm": "{name} is signed up as your guest for {date}.",
+  "@guestAddConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "guestRemove": "Remove",
+  "guestRemoveConfirm": "Remove {name} from your guests?",
+  "@guestRemoveConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "guestVisited": "Visited"
 }

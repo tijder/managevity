@@ -190,5 +190,20 @@
   "aboutDemoButton": "Open de demo",
   "aboutLicences": "Opensource-licenties",
   "aboutSource": "Vrije software onder de GPL-3.0-licentie.",
-  "aboutWebNote": "In de webversie lopen verzoeken via de proxy van wie die website host."
+  "aboutWebNote": "In de webversie lopen verzoeken via de proxy van wie die website host.",
+  "confirmSureTitle": "Weet je het zeker?",
+  "confirmIrreversible": "Dit kun je vanuit de app niet ongedaan maken.",
+  "moreGuests": "Gasten",
+  "guestsEmpty": "Geen gasten aangemeld.",
+  "guestsNotAllowed": "Je kunt nu geen gast meenemen.",
+  "guestAdd": "Gast aanmelden",
+  "guestName": "Naam",
+  "guestNameRequired": "Vul een naam in",
+  "guestEmail": "E-mail (optioneel)",
+  "guestMobile": "Mobiel (optioneel)",
+  "guestDate": "Datum van bezoek",
+  "guestAddConfirm": "{name} wordt aangemeld als je gast op {date}.",
+  "guestRemove": "Verwijderen",
+  "guestRemoveConfirm": "{name} verwijderen uit je gasten?",
+  "guestVisited": "Geweest"
 }

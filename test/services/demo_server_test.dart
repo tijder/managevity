@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:managevity/models/guest_pass.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/services/demo_server.dart';
 import 'package:managevity/services/sportivity_api.dart';
@@ -135,6 +136,20 @@ void main() {
     await expectLater(
       api.lesson(-1),
       throwsA(isA<SportivityException>().having((e) => e.code, 'code', AppError.lessonNotFound)),
+    );
+  });
+
+  test('guests can be signed up and removed', () async {
+    final location = (await api.locations()).single.id;
+    expect((await api.guestAllowance(location)).allowed, isTrue);
+    await api.addGuest(location, NewGuest(name: 'Sam Guest', visitDate: today()));
+    final guest = (await api.guestPasses(location)).single;
+    expect(guest.name, 'Sam Guest');
+    await api.deleteGuest(location, guest);
+    expect(await api.guestPasses(location), isEmpty);
+    await expectLater(
+      api.addGuest(location, NewGuest(name: ' ', visitDate: today())),
+      throwsA(isA<SportivityException>()),
     );
   });
 }

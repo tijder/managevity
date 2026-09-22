@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:managevity/models/customer.dart';
+import 'package:managevity/models/guest_pass.dart';
 import 'package:managevity/models/heatmap.dart';
 import 'package:managevity/models/invoice.dart';
 import 'package:managevity/models/lesson.dart';
@@ -12,7 +13,19 @@ import '../fixtures/fixtures.dart';
 
 /// A populated, entirely made-up gym for the screenshots.
 class DemoApi extends FakeSportivityApi {
-  DemoApi() : super(lessons: _lessons());
+  DemoApi() : super(lessons: _lessons()) {
+    final today = dayOf(DateTime.now());
+    guests
+      ..add(GuestPass(id: 1, name: 'Sam Porter', visitDate: today.add(const Duration(days: 2))))
+      ..add(
+        GuestPass(
+          id: 2,
+          name: 'Kim de Vries',
+          visitDate: today.subtract(const Duration(days: 9)),
+          used: true,
+        ),
+      );
+  }
 
   static List<Lesson> _lessons() {
     final today = dayOf(DateTime.now());
