@@ -345,6 +345,7 @@ void main() {
       );
       final logo = await client.gymLogo();
       expect(logo?.bytes, isNotEmpty);
+      expect(GymLogo.tryFromJson({'Url': 'https://cdn.example.org/logo.png'}), isNull);
       expect(
         sent.single.$1.headers.keys.map((k) => k.toLowerCase()),
         isNot(contains('bundleidentifier')),

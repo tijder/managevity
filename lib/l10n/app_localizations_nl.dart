@@ -602,7 +602,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get aboutFeaturePrivacyBody =>
-      'Geen advertenties, geen analytics, geen tracking en geen eigen server: de app praat alleen met de Sportivity-server van je sportschool en, als je dat aanzet, met je eigen agenda. Je wachtwoord staat in de sleutelbos van je apparaat en wordt nooit in een browser bewaard. De broncode is openbaar en door iedereen na te kijken.';
+      'Geen advertenties, geen analytics, geen tracking en geen eigen server: de app praat alleen met de Sportivity-server van je sportschool en, als je dat aanzet, met je eigen agenda. Betalen gebeurt in je browser, op de betaalpagina van je sportschool. Je wachtwoord staat in de sleutelbos van je apparaat en wordt nooit in een browser bewaard. De broncode is openbaar en door iedereen na te kijken.';
 
   @override
   String get aboutFeatureCalendarTitle => 'Synchroniseert met je agenda';
@@ -616,7 +616,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get aboutFeatureMoreBody =>
-      'Rooster met filters, wachtlijsten, favorieten, je lesgeschiedenis met wie de les gaf, de drukte in de sportschool, facturen als PDF met een grafiek per maand, je gegevens en pasfoto, nieuws. Werkt offline met wat eerder is opgehaald. Nederlands en Engels, licht en donker.';
+      'Rooster met filters, wachtlijsten, favorieten, je lesgeschiedenis met wie de les gaf, de drukte in de sportschool, facturen als PDF met een grafiek per maand, je gegevens en pasfoto, nieuws. En je abonnement: een gast meenemen, add-ons aan- of uitzetten, bevriezen of opzeggen, tegoed opwaarderen, openstaande facturen betalen en het aanbod van de sportschool bekijken, steeds na een vraag die laat zien wat het betekent. Werkt offline met wat eerder is opgehaald. Nederlands en Engels, licht en donker.';
 
   @override
   String get aboutDemoTitle => 'Proberen zonder account';

@@ -20,28 +20,23 @@ class GymButton {
   }
 }
 
-/// The gym's logo (`Location/LogoLocation`), as an image or as a web address. Like
-/// [GymButton], read tolerantly: no logo is better than a wrong guess.
+/// The gym's logo (`Location/LogoLocation`). Only an image that comes along in the answer
+/// (Base64): an address would make the app fetch from wherever it points, and the app
+/// promises to talk only to the gym's server. Read tolerantly, like [GymButton].
 class GymLogo {
-  const GymLogo({this.bytes, this.uri});
+  const GymLogo(this.bytes);
 
-  final Uint8List? bytes;
-  final Uri? uri;
+  final Uint8List bytes;
 
   static GymLogo? tryFromJson(Json json) {
     final b64 = _first(json, ['Base64', 'LogoBase64', 'Logo', 'Image']);
-    if (b64 != null) {
-      try {
-        final bytes = base64Decode(b64);
-        if (bytes.isNotEmpty) return GymLogo(bytes: bytes);
-      } on FormatException {
-        // Not Base64: perhaps an address, below.
-      }
+    if (b64 == null) return null;
+    try {
+      final bytes = base64Decode(b64);
+      return bytes.isEmpty ? null : GymLogo(bytes);
+    } on FormatException {
+      return null;
     }
-    final uri = _webAddress(
-      _first(json, ['Url', 'URL', 'LogoUrl', 'PublicPath', 'Path', 'Logo', 'Image']),
-    );
-    return uri == null ? null : GymLogo(uri: uri);
   }
 }
 

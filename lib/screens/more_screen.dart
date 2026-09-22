@@ -99,9 +99,7 @@ class MoreScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: SizedBox(
                   height: 56,
-                  child: logo.bytes != null
-                      ? Image.memory(logo.bytes!, errorBuilder: (_, _, _) => const SizedBox())
-                      : Image.network('${logo.uri}', errorBuilder: (_, _, _) => const SizedBox()),
+                  child: Image.memory(logo.bytes, errorBuilder: (_, _, _) => const SizedBox()),
                 ),
               ),
             item(Icons.campaign_outlined, l10n.moreNews, NewsRoute(notifications: false)),

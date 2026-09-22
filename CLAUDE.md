@@ -128,9 +128,24 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
 - **Router**: auto_route with `SessionGuard` (not logged in → login, no location →
   location picker). `main.dart` creates the `ProviderContainer` itself so the guard can
   reach it.
-- **Money**: `joinLesson` sends `BuyLesson: false`; only after `ShowFinancialPopup` *and* a
-  confirmation that shows the amount does it go again with `true`. Changing a membership,
-  toggling add-ons and paying are deliberately not in the app.
+- **Money and the membership**: nothing that changes the account or costs money goes out
+  without `confirmAction` (`widgets/confirm_action.dart`) showing what, from when and for
+  how much; `irreversible: true` (cancel, withdraw) asks a second time.
+  - `joinLesson` sends `BuyLesson: false`; only after `ShowFinancialPopup` *and* a
+    confirmation that shows the amount does it go again with `true`.
+  - Add-ons: our question first, then `AddOn/TurnOnOff` returns the gym's terms and the
+    user is asked again before `TurnOnOffConfirmation` (in case step one already acts).
+  - Paying: `Payment/*` only returns a Sisow page (`DeviceType: Web`), opened in the browser
+    via `openExternalProvider`; the app never pays. The demo refuses every payment.
+  - Freeze/cancel/withdraw are offered only where the membership says so (`AllowFreeze`,
+    `AllowCancel`, `CoolingOff`); the answer (`EmailResponse`) is shown as is.
+  - Write actions report refusal as HTTP 200 with `Succes: false` or `Warning: true`;
+    `SportivityApi._outcome` turns that into a `SportivityException` with the server text.
+  - Deliberately **not** in the app: `MembershipDefinition/Membership` and `/Convert`
+    (taking out or converting needs a signature and an IBAN). The offer is read-only.
+  - Harmless, reversible settings (opt-in, the gym's language) apply at once with Undo.
+- **Tests never touch the network**: `FakeSportivityApi` runs on a transport that throws,
+  so a method it does not override fails loudly instead of reaching the real server.
 - **Design**: content does not stretch on wide screens — `widgets/responsive.dart`
   (`ResponsiveListView` caps the width, `CardGrid` puts cards side by side). Loading goes
   through `AsyncView` with a `placeholder` from `widgets/placeholders.dart` (Skeletonizer);

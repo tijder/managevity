@@ -1176,7 +1176,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutFeaturePrivacyBody.
   ///
   /// In en, this message translates to:
-  /// **'No ads, no analytics, no tracking, and no server of our own: the app talks only to your gym\'s Sportivity server and, if you turn it on, to your own calendar. Your password is kept in your device\'s keychain and is never stored in a browser. The source code is open for anyone to check.'**
+  /// **'No ads, no analytics, no tracking, and no server of our own: the app talks only to your gym\'s Sportivity server and, if you turn it on, to your own calendar. Paying happens in your browser, on your gym\'s payment page. Your password is kept in your device\'s keychain and is never stored in a browser. The source code is open for anyone to check.'**
   String get aboutFeaturePrivacyBody;
 
   /// No description provided for @aboutFeatureCalendarTitle.
@@ -1200,7 +1200,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutFeatureMoreBody.
   ///
   /// In en, this message translates to:
-  /// **'Timetable with filters, waiting lists, favourites, your class history with who taught it, how busy the gym is, invoices as PDF with a monthly chart, your details and ID photo, news. Works offline with what was loaded earlier. Dutch and English, light and dark.'**
+  /// **'Timetable with filters, waiting lists, favourites, your class history with who taught it, how busy the gym is, invoices as PDF with a monthly chart, your details and ID photo, news. Also your membership: bring a guest, switch add-ons, freeze or cancel, top up your credit, pay what is outstanding and browse what the gym offers, always after a question that shows what it means. Works offline with what was loaded earlier. Dutch and English, light and dark.'**
   String get aboutFeatureMoreBody;
 
   /// No description provided for @aboutDemoTitle.

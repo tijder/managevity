@@ -18,11 +18,20 @@ getting them into your own calendar, without the official app.
   - **CalDAV** directly (Nextcloud and other servers), with an app password.
 
   The app only touches events it created itself.
-- How busy the gym is, news and notifications, invoices (PDF), your details,
-  memberships and add-ons (read-only), contact details and house rules
+- How busy the gym is, news and notifications, invoices (PDF), your details, the language
+  and channels your gym may use, contact details and house rules
+- **Your membership**: bring a guest, switch add-ons on or off, freeze, cancel or withdraw,
+  top up your credit, pay outstanding invoices, and browse what the gym offers (including
+  what your membership can switch to)
 
-Deliberately **not** included: changing, freezing or cancelling a membership, and paying.
-A class that costs money is only booked after a confirmation that shows the amount.
+Everything that changes your membership or costs money asks first and shows what it
+means: what, from when, for how much. Cancelling and withdrawing ask twice; add-ons too,
+the second time with the gym's own terms. Paying happens in your browser, on your gym's
+payment page; the app itself never pays. A class that costs money is only booked after a
+confirmation that shows the amount.
+
+Deliberately **not** included: taking out a new membership or converting one. That needs
+a signature and a bank account, and goes through your gym.
 
 Platforms: Android, Linux and web.
 
