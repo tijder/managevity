@@ -31,6 +31,7 @@
   "lessonBooked": "Geboekt",
   "lessonWaitingList": "Wachtlijst",
   "lessonFull": "Vol",
+  "lessonAttended": "Geweest",
   "lessonPast": "Deze les is al geweest.",
   "lessonTrainer": "Trainer",
   "lessonRoom": "Zaal",

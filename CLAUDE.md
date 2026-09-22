@@ -41,9 +41,10 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
   - `SpotsInt` is the number of people **going**, not the spots free (22-09-2026, 231
     lessons: `Full` exactly when it equals `MaximumParticipants`). `Lesson.participants`
     holds it, `spotsLeft`/`isFull` are derived. Dates go as `yyyy-MM-dd`.
-  Still open, marked with `TODO(probe)`: the form of `Authorization` (tried out while
-  logging in) and the real values of `BookingStatus` (`models/lesson.dart` currently
-  interprets them by keyword).
+  `BookingStatus` in real data: `Gereserveerd` / `Reservering_vast` (booked), `Aangemeld`
+  (past lessons: attended), absent (not booked); see `models/lesson.dart`. Still open: the
+  waiting-list value (recognised by keyword), and `Authorization` is still tried out while
+  logging in although the probe found `Bearer`.
 - **Demo mode**: `services/demo_server.dart` is a Dio `HttpClientAdapter` that answers like
   the real server; `SportivityApi.login('demo','demo')` and the `session` setter route to it
   (a restored demo session must go back to the demo, never to the network with a made-up

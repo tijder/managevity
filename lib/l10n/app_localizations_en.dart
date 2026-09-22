@@ -104,6 +104,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonFull => 'Full';
 
   @override
+  String get lessonAttended => 'Attended';
+
+  @override
   String get lessonPast => 'This lesson is over.';
 
   @override

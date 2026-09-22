@@ -104,6 +104,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get lessonFull => 'Vol';
 
   @override
+  String get lessonAttended => 'Geweest';
+
+  @override
   String get lessonPast => 'Deze les is al geweest.';
 
   @override

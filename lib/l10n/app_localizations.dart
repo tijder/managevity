@@ -279,6 +279,12 @@ abstract class AppLocalizations {
   /// **'Full'**
   String get lessonFull;
 
+  /// No description provided for @lessonAttended.
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get lessonAttended;
+
   /// No description provided for @lessonPast.
   ///
   /// In en, this message translates to:

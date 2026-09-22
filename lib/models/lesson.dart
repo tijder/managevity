@@ -155,7 +155,10 @@ class Lesson {
 /// The API gives the status as free text and the spec does not list the values. The raw
 /// value is therefore kept; the derivations below are the only place that interprets it.
 ///
-/// TODO(probe): record the real values with tool/probe.dart and make this exact.
+/// Seen in real data (probe, 22-09-2026): `Gereserveerd` (booked, future lessons),
+/// `Reservering_vast` (a fixed reservation, also booked), `Aangemeld` (only on lessons that
+/// are over: attended) and no status at all on lessons you are not in. A waiting-list value
+/// has not been seen yet, so that one is still recognised by keyword.
 ///
 /// Deliberately wrapped around a non-nullable String: at runtime an extension type *is* its
 /// representation, so `BookingStatus(null)` would simply be `null` and drop out of a `??`.
@@ -164,14 +167,18 @@ extension type const BookingStatus(String raw) {
 
   bool get isWaitingList => _norm.contains('wait') || _norm.contains('wacht');
 
+  /// Took part: the status a booking gets once the lesson is over.
+  bool get isAttended => _norm == 'aangemeld' || _norm == 'attended';
+
   bool get isBooked =>
+      isAttended ||
       !isWaitingList &&
-      !_norm.contains('not') &&
-      !_norm.contains('niet') &&
-      (_norm.contains('book') ||
-          _norm.contains('geboekt') ||
-          _norm.contains('reserv') ||
-          _norm.contains('joined'));
+          !_norm.contains('not') &&
+          !_norm.contains('niet') &&
+          (_norm.contains('book') ||
+              _norm.contains('geboekt') ||
+              _norm.contains('reserv') ||
+              _norm.contains('joined'));
 
   /// Booked or on the waiting list: everything for which cancelling makes sense.
   bool get isMine => isBooked || isWaitingList;

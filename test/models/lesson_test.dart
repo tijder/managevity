@@ -44,6 +44,15 @@ void main() {
 
   // The real server answers in Dutch; the Dutch statuses below test that keyword matching.
   group('BookingStatus', () {
+    test('the values the real server sends', () {
+      expect(const BookingStatus('Gereserveerd').isBooked, isTrue);
+      expect(const BookingStatus('Reservering_vast').isBooked, isTrue);
+      expect(const BookingStatus('Aangemeld').isBooked, isTrue);
+      expect(const BookingStatus('Aangemeld').isAttended, isTrue);
+      expect(const BookingStatus('Gereserveerd').isAttended, isFalse);
+      expect(const BookingStatus('Gereserveerd').isWaitingList, isFalse);
+    });
+
     test('waiting list takes precedence over booked', () {
       expect(const BookingStatus('WaitingList').isWaitingList, isTrue);
       expect(const BookingStatus('Op wachtlijst').isBooked, isFalse);

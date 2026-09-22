@@ -77,6 +77,14 @@ class LessonCard extends StatelessWidget {
 
   Widget _status(AppLocalizations l10n, ThemeData theme) {
     final scheme = theme.colorScheme;
+    if (lesson.bookingStatus.isAttended) {
+      return _Pill(
+        icon: Icons.done_all,
+        label: l10n.lessonAttended,
+        background: scheme.surfaceContainerHighest,
+        foreground: scheme.onSurfaceVariant,
+      );
+    }
     if (lesson.bookingStatus.isBooked) {
       return _Pill(
         icon: Icons.check,
