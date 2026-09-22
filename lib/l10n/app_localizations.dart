@@ -1460,6 +1460,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You pay the outstanding amount of {amount}.'**
   String invoicesPayConfirm(String amount);
+
+  /// No description provided for @addonTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get addonTurnOn;
+
+  /// No description provided for @addonTurnOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get addonTurnOff;
+
+  /// No description provided for @addonFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get addonFrom;
+
+  /// No description provided for @addonConfirmOn.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is turned on from {date}.'**
+  String addonConfirmOn(String name, String date);
+
+  /// No description provided for @addonConfirmOff.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is turned off from {date}.'**
+  String addonConfirmOff(String name, String date);
+
+  /// No description provided for @addonPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: {price}'**
+  String addonPrice(String price);
+
+  /// No description provided for @addonServerSays.
+  ///
+  /// In en, this message translates to:
+  /// **'Your gym says:'**
+  String get addonServerSays;
+
+  /// No description provided for @addonMandatory.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get addonMandatory;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

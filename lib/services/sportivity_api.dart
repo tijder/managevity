@@ -240,6 +240,35 @@ class SportivityApi {
     Addon.tryFromJson,
   );
 
+  /// The add-ons that go with one membership, including the ones that are off.
+  Future<List<Addon>> membershipAddons(int membershipId) async => _items(
+    await _get('AddOn/MembershipAddon', {'MembershipId': membershipId}),
+    'AddOns',
+    Addon.tryFromJson,
+  );
+
+  /// Step one of switching an add-on: the server answers with what it would mean (price,
+  /// start). Returns that text. Step two, [confirmAddonChange], carries it out.
+  Future<String?> requestAddonChange(
+    Addon addon, {
+    required bool on,
+    required DateTime from,
+  }) async => _outcome(await _send('POST', 'AddOn/TurnOnOff', data: _addonChange(addon, on, from)));
+
+  Future<String?> confirmAddonChange(
+    Addon addon, {
+    required bool on,
+    required DateTime from,
+  }) async => _outcome(
+    await _send('POST', 'AddOn/TurnOnOffConfirmation', data: _addonChange(addon, on, from)),
+  );
+
+  Json _addonChange(Addon addon, bool on, DateTime from) => {
+    'AddonID': addon.id,
+    'AddOnTurnOn': on,
+    'StartDate': _date(from),
+  };
+
   /// The locations the customer can go to.
   ///
   /// `GetLocationsOfCompany` itself wants a LocationId, and right after logging in there is

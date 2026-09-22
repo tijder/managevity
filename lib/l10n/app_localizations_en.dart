@@ -769,4 +769,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String invoicesPayConfirm(String amount) {
     return 'You pay the outstanding amount of $amount.';
   }
+
+  @override
+  String get addonTurnOn => 'Turn on';
+
+  @override
+  String get addonTurnOff => 'Turn off';
+
+  @override
+  String get addonFrom => 'From';
+
+  @override
+  String addonConfirmOn(String name, String date) {
+    return '$name is turned on from $date.';
+  }
+
+  @override
+  String addonConfirmOff(String name, String date) {
+    return '$name is turned off from $date.';
+  }
+
+  @override
+  String addonPrice(String price) {
+    return 'Price: $price';
+  }
+
+  @override
+  String get addonServerSays => 'Your gym says:';
+
+  @override
+  String get addonMandatory => 'Required';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get next => 'Next';
 }

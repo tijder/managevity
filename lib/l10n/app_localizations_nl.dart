@@ -769,4 +769,40 @@ class AppLocalizationsNl extends AppLocalizations {
   String invoicesPayConfirm(String amount) {
     return 'Je betaalt het openstaande bedrag van $amount.';
   }
+
+  @override
+  String get addonTurnOn => 'Aanzetten';
+
+  @override
+  String get addonTurnOff => 'Uitzetten';
+
+  @override
+  String get addonFrom => 'Vanaf';
+
+  @override
+  String addonConfirmOn(String name, String date) {
+    return '$name gaat aan per $date.';
+  }
+
+  @override
+  String addonConfirmOff(String name, String date) {
+    return '$name gaat uit per $date.';
+  }
+
+  @override
+  String addonPrice(String price) {
+    return 'Prijs: $price';
+  }
+
+  @override
+  String get addonServerSays => 'Je sportschool meldt:';
+
+  @override
+  String get addonMandatory => 'Verplicht';
+
+  @override
+  String get confirm => 'Bevestigen';
+
+  @override
+  String get next => 'Volgende';
 }

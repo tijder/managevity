@@ -218,6 +218,36 @@ class FakeSportivityApi extends SportivityApi {
   @override
   Future<List<Addon>> addons(int locationId) async => [...addonList];
 
+  /// ('request' | 'confirm', add-on id, on).
+  final addonCalls = <(String, int, bool)>[];
+
+  @override
+  Future<List<Addon>> membershipAddons(int membershipId) async => const [];
+
+  @override
+  Future<String?> requestAddonChange(
+    Addon addon, {
+    required bool on,
+    required DateTime from,
+  }) async {
+    addonCalls.add(('request', addon.id, on));
+    return 'From then on you pay ${addon.price} extra.';
+  }
+
+  @override
+  Future<String?> confirmAddonChange(
+    Addon addon, {
+    required bool on,
+    required DateTime from,
+  }) async {
+    addonCalls.add(('confirm', addon.id, on));
+    addonList = [
+      for (final a in addonList)
+        a.id == addon.id ? Addon(id: a.id, description: a.description, price: a.price, on: on) : a,
+    ];
+    return 'Add-on changed';
+  }
+
   /// What was asked for: ('invoices', null) or ('credit', amount).
   final paymentRequests = <(String, num?)>[];
   static final paymentPage = Uri.parse('https://pay.example.org/checkout');

@@ -398,5 +398,42 @@
         "type": "String"
       }
     }
-  }
+  },
+  "addonTurnOn": "Turn on",
+  "addonTurnOff": "Turn off",
+  "addonFrom": "From",
+  "addonConfirmOn": "{name} is turned on from {date}.",
+  "@addonConfirmOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "addonConfirmOff": "{name} is turned off from {date}.",
+  "@addonConfirmOff": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "addonPrice": "Price: {price}",
+  "@addonPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "addonServerSays": "Your gym says:",
+  "addonMandatory": "Required",
+  "confirm": "Confirm",
+  "next": "Next"
 }

@@ -35,9 +35,21 @@ final membershipsProvider = FutureProvider.autoDispose<List<Membership>>(
   (ref) => ref.watch(apiProvider).memberships(ref.watch(locationIdProvider)),
 );
 
-final addonsProvider = FutureProvider.autoDispose<List<Addon>>(
-  (ref) => ref.watch(apiProvider).addons(ref.watch(locationIdProvider)),
-);
+/// The customer's add-ons plus those that can still be added to one of their memberships.
+/// The per-membership lists are an extra: when one fails, the customer's own list remains.
+final addonsProvider = FutureProvider.autoDispose<List<Addon>>((ref) async {
+  final api = ref.watch(apiProvider);
+  final own = await api.addons(ref.watch(locationIdProvider));
+  final memberships = await ref.watch(membershipsProvider.future).catchError((_) => <Membership>[]);
+  final byId = {for (final a in own) a.id: a};
+  for (final m in memberships) {
+    final more = await api.membershipAddons(m.id).catchError((_) => <Addon>[]);
+    for (final a in more) {
+      byId.putIfAbsent(a.id, () => a);
+    }
+  }
+  return byId.values.toList();
+});
 
 final heatmapWeekProvider = FutureProvider.autoDispose<List<HeatmapCell>>(
   (ref) => ref.watch(apiProvider).heatmapWeek(ref.watch(locationIdProvider)),

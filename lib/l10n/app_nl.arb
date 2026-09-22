@@ -227,5 +227,15 @@
   "paymentOpened": "Betaalpagina geopend. Dit scherm ververst zodra je terugkomt.",
   "paymentCouldNotOpen": "De betaalpagina kon niet worden geopend.",
   "invoicesPay": "Betalen",
-  "invoicesPayConfirm": "Je betaalt het openstaande bedrag van {amount}."
+  "invoicesPayConfirm": "Je betaalt het openstaande bedrag van {amount}.",
+  "addonTurnOn": "Aanzetten",
+  "addonTurnOff": "Uitzetten",
+  "addonFrom": "Vanaf",
+  "addonConfirmOn": "{name} gaat aan per {date}.",
+  "addonConfirmOff": "{name} gaat uit per {date}.",
+  "addonPrice": "Prijs: {price}",
+  "addonServerSays": "Je sportschool meldt:",
+  "addonMandatory": "Verplicht",
+  "confirm": "Bevestigen",
+  "next": "Volgende"
 }

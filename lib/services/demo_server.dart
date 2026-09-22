@@ -30,6 +30,7 @@ class DemoServer implements HttpClientAdapter {
   String? _photoBase64;
   final _guests = <Map<String, Object?>>[];
   var _language = 'en_GB';
+  final _addonOn = <int, bool>{1: true, 2: false};
   var _optIn = <String, Object?>{'OptIn': true, 'OptInCalls': false, 'OptInWhatsapp': false};
   var _nextGuestId = 1;
   var _contact = <String, Object?>{
@@ -109,6 +110,10 @@ class DemoServer implements HttpClientAdapter {
       ('POST', 'UserContent/SetUserContent') => _setContact(body),
       ('GET', 'UserContent/CustomerMemberships') => _memberships(),
       ('GET', 'AddOn/CustomerAddons') => _addons(),
+      ('GET', 'AddOn/MembershipAddon') => _addons(),
+      // Step one only describes the change; step two carries it out.
+      ('POST', 'AddOn/TurnOnOff') => _addonTerms(body),
+      ('POST', 'AddOn/TurnOnOffConfirmation') => _addonSwitch(body),
       ('GET', 'Location/GetLocationsOfCompany') => {
         'Response': 'OK',
         'Locationss': [
@@ -412,17 +417,37 @@ class DemoServer implements HttpClientAdapter {
         'Description': 'Sauna',
         'MembershipName': 'Unlimited',
         'NormalPriceText': '€ 5.00',
-        'AddonOn': true,
+        'AddonOn': _addonOn[1],
       },
       {
         'AddonID': 2,
         'Description': 'Sports drink',
         'MembershipName': 'Unlimited',
         'NormalPriceText': '€ 4.00',
-        'AddonOn': false,
+        'AddonOn': _addonOn[2],
       },
     ],
   };
+
+  Map<String, Object?> _addonTerms(Map<String, dynamic> body) {
+    final id = body['AddonID'];
+    if (!_addonOn.containsKey(id)) return {'Response': 'Add-on not found', 'Warning': true};
+    final price = id == 1 ? '€ 5.00' : '€ 4.00';
+    return {
+      'Response': 'Succes',
+      'Warning': false,
+      'Message': body['AddOnTurnOn'] == true
+          ? 'From ${body['StartDate']} you pay $price per 4 weeks extra (demo: nothing is charged).'
+          : 'From ${body['StartDate']} you no longer pay $price per 4 weeks.',
+    };
+  }
+
+  Map<String, Object?> _addonSwitch(Map<String, dynamic> body) {
+    final id = body['AddonID'];
+    if (!_addonOn.containsKey(id)) return {'Response': 'Add-on not found', 'Warning': true};
+    _addonOn[id as int] = body['AddOnTurnOn'] == true;
+    return {'Response': 'Succes', 'Warning': false, 'Message': 'Add-on changed (demo).'};
+  }
 
   Map<String, Object?> _invoices({required bool all}) {
     final today = _today();

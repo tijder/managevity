@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/l10n.dart';
+import '../models/membership.dart';
 import '../models/payment.dart';
+import '../utils/errors.dart';
 import '../providers/content_providers.dart';
 import '../providers/services.dart';
 import '../providers/session_provider.dart';
@@ -129,33 +131,7 @@ class MembershipsScreen extends ConsumerWidget {
                   ),
                 if (addons.isNotEmpty) ...[
                   SectionTitle(l10n.membershipAddons),
-                  Card(
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      children: [
-                        for (final (i, a) in addons.indexed) ...[
-                          if (i > 0) const Divider(height: 1, indent: 16),
-                          ListTile(
-                            title: Text(a.description),
-                            subtitle: Text([a.membershipName, a.price].nonNulls.join(' · ')),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: a.on
-                                    ? scheme.primaryContainer
-                                    : scheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                a.on ? l10n.addonOn : l10n.addonOff,
-                                style: theme.textTheme.labelLarge,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                  _AddonList(addons: addons),
                 ],
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -238,6 +214,95 @@ class _BalanceCardState extends ConsumerState<_BalanceCard> with RefreshAfterPay
                 onPressed: () => _topUp(options, sportCredits: customer?.hasSportsCredits ?? false),
                 child: Text(l10n.balanceTopUp),
               ),
+      ),
+    );
+  }
+}
+
+/// Add-ons, each with a switch. Switching asks twice: first here (what, from when, for how
+/// much), then with the server's own words from `TurnOnOff`, before `TurnOnOffConfirmation`
+/// carries it out.
+class _AddonList extends ConsumerStatefulWidget {
+  const _AddonList({required this.addons});
+
+  final List<Addon> addons;
+
+  @override
+  ConsumerState<_AddonList> createState() => _AddonListState();
+}
+
+class _AddonListState extends ConsumerState<_AddonList> {
+  int? _busy;
+
+  Future<void> _switch(Addon addon, bool on) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final today = DateUtils.dateOnly(DateTime.now());
+    final from = await showDatePicker(
+      context: context,
+      helpText: l10n.addonFrom,
+      initialDate: today,
+      firstDate: today,
+      lastDate: DateTime(today.year + 1, today.month, today.day),
+    );
+    if (from == null || !mounted) return;
+    final date = DateFormat.yMMMd(locale).format(from);
+    final title = on ? l10n.addonTurnOn : l10n.addonTurnOff;
+    final asked = await confirmAction(
+      context,
+      title: title,
+      lines: [
+        on
+            ? l10n.addonConfirmOn(addon.description, date)
+            : l10n.addonConfirmOff(addon.description, date),
+        if (addon.price != null) l10n.addonPrice(addon.price!),
+      ],
+      confirmLabel: l10n.next,
+    );
+    if (!asked || !mounted) return;
+
+    setState(() => _busy = addon.id);
+    final api = ref.read(apiProvider);
+    try {
+      final terms = await api.requestAddonChange(addon, on: on, from: from);
+      if (!mounted) return;
+      final confirmed = await confirmAction(
+        context,
+        title: title,
+        lines: [l10n.addonServerSays, terms ?? l10n.addonPrice(addon.price ?? '–')],
+        confirmLabel: l10n.confirm,
+      );
+      if (!confirmed) return;
+      final message = await api.confirmAddonChange(addon, on: on, from: from);
+      messenger.showSnackBar(SnackBar(content: Text(message ?? l10n.actionDone)));
+      ref.invalidate(addonsProvider);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final (i, a) in widget.addons.indexed) ...[
+            if (i > 0) const Divider(height: 1, indent: 16),
+            ListTile(
+              title: Text(a.description),
+              subtitle: Text([a.membershipName, a.price].nonNulls.join(' · ')),
+              trailing: a.mandatory
+                  ? Text(l10n.addonMandatory, style: theme.textTheme.labelLarge)
+                  : Switch(value: a.on, onChanged: _busy != null ? null : (on) => _switch(a, on)),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:managevity/models/guest_pass.dart';
+import 'package:managevity/models/membership.dart';
 import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/services/sportivity_api.dart';
@@ -163,6 +164,33 @@ void main() {
       );
       final option = (await client.creditOptions(7)).single;
       expect((option.label, option.amount), ('€10', 10));
+    });
+  });
+
+  group('add-ons', () {
+    const addon = Addon(id: 4, description: 'Sauna');
+
+    test('both steps send the same change; a warning is a refusal', () async {
+      final client = api(
+        (o, _) => json({'Response': 'Succes', 'Warning': false, 'Message': 'Per 1 oktober € 5,-'}),
+      );
+      expect(
+        await client.requestAddonChange(addon, on: true, from: DateTime(2026, 10, 1)),
+        'Per 1 oktober € 5,-',
+      );
+      await client.confirmAddonChange(addon, on: true, from: DateTime(2026, 10, 1));
+      expect(sent.map((r) => r.$1.path), ['AddOn/TurnOnOff', 'AddOn/TurnOnOffConfirmation']);
+      for (final (_, body) in sent) {
+        expect(body, {'AddonID': 4, 'AddOnTurnOn': true, 'StartDate': '2026-10-01'});
+      }
+
+      final refusing = api(
+        (_, _) => json({'Response': 'Succes', 'Warning': true, 'Message': 'Niet mogelijk'}),
+      );
+      await expectLater(
+        refusing.requestAddonChange(addon, on: false, from: DateTime(2026, 10, 1)),
+        refusedWith('Niet mogelijk'),
+      );
     });
   });
 }

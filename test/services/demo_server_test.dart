@@ -173,4 +173,13 @@ void main() {
     await expectLater(api.paymentLink(location), throwsA(isA<SportivityException>()));
     await expectLater(api.creditLink(location, 10), throwsA(isA<SportivityException>()));
   });
+
+  test('an add-on switches only at the confirmation', () async {
+    final location = (await api.locations()).single.id;
+    final drink = (await api.addons(location)).firstWhere((a) => !a.on);
+    expect(await api.requestAddonChange(drink, on: true, from: today()), contains('€ 4.00'));
+    expect((await api.addons(location)).firstWhere((a) => a.id == drink.id).on, isFalse);
+    await api.confirmAddonChange(drink, on: true, from: today());
+    expect((await api.addons(location)).firstWhere((a) => a.id == drink.id).on, isTrue);
+  });
 }
