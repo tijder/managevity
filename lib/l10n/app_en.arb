@@ -486,5 +486,23 @@
     }
   },
   "changeIsRequest": "This is a request to your gym, which confirms it.",
-  "changeSend": "Send request"
+  "changeSend": "Send request",
+  "moreOffers": "Memberships on offer",
+  "offersSwitchTitle": "Switch membership",
+  "membershipSeeSwitch": "Switch options",
+  "offerPaymentMethod": "Payment: {method}",
+  "@offerPaymentMethod": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "offerPromotion": "Promotion",
+  "offerStartToday": "When starting today",
+  "offerTotal": "Total",
+  "offerConditions": "Conditions",
+  "offerRequired": "required",
+  "offerIbanRequired": "A bank account (IBAN) is required.",
+  "offerViaGym": "Taking out this membership, or switching to it, goes through your gym."
 }

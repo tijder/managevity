@@ -9,6 +9,7 @@ import '../models/payment.dart';
 import '../utils/errors.dart';
 import '../providers/content_providers.dart';
 import '../providers/services.dart';
+import '../router/app_router.dart';
 import '../providers/session_provider.dart';
 import '../widgets/confirm_action.dart';
 import '../widgets/payment_page.dart';
@@ -404,6 +405,7 @@ class _MembershipActionsState extends ConsumerState<_MembershipActions> {
       );
     }
     final actions = [
+      if (m.canConvert) (null, l10n.membershipSeeSwitch, Icons.swap_horiz),
       if (m.allowFreeze) (_Change.freeze, l10n.membershipFreeze, Icons.ac_unit),
       if (m.allowCancel) (_Change.cancel, l10n.membershipCancel, Icons.event_busy_outlined),
       if (m.coolingOff) (_Change.withdraw, l10n.membershipWithdraw, Icons.undo),
@@ -417,7 +419,11 @@ class _MembershipActionsState extends ConsumerState<_MembershipActions> {
         children: [
           for (final (change, label, icon) in actions)
             OutlinedButton.icon(
-              onPressed: _busy ? null : () => _start(change),
+              onPressed: _busy
+                  ? null
+                  : () => change == null
+                        ? context.router.push(OffersRoute(upgradeFrom: m.id))
+                        : _start(change),
               icon: Icon(icon),
               label: Text(label),
             ),

@@ -99,6 +99,7 @@ class MoreScreen extends ConsumerWidget {
           SectionTitle(l10n.moreSectionAccount),
           group([
             item(Icons.card_membership, l10n.moreMemberships, const MembershipsRoute()),
+            item(Icons.storefront_outlined, l10n.moreOffers, OffersRoute()),
             item(Icons.receipt_long_outlined, l10n.moreInvoices, const InvoicesRoute()),
             item(Icons.group_add_outlined, l10n.moreGuests, const GuestsRoute()),
             item(

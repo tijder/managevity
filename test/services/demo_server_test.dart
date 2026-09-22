@@ -201,4 +201,15 @@ void main() {
     membership = (await api.memberships(location)).single;
     expect((membership.terminated, membership.allowCancel), (true, false));
   });
+
+  test('the offer can be browsed, down to the PDF of the terms', () async {
+    final location = (await api.locations()).single.id;
+    final offers = await api.membershipOffers(location, 'en');
+    expect(offers, hasLength(3));
+    expect(await api.upgradeOffers(location, 'en', 1), hasLength(2));
+    final conditions = await api.offerConditions(location, 'en', offers.first.id);
+    expect(conditions.conditions.where((c) => c.hasPdf), isNotEmpty);
+    expect((await api.firstCosts(location, 'en', offers.first, start: today())).total, isNotNull);
+    expect(await api.conditionPdf(location, 'en', conditions.conditions.first.type), isNotEmpty);
+  });
 }

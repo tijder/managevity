@@ -251,4 +251,75 @@ void main() {
       );
     });
   });
+
+  group('the offer (read-only)', () {
+    test('offers, conditions and first costs as the real server shapes them', () async {
+      final client = api(
+        (o, _) => json(switch (o.path) {
+          'MembershipDefinition/MembershipDefinitions' => {
+            'Response': 'Succes',
+            'MembershipDefinitions': [
+              {
+                'MembershipDefinitionId': 67523,
+                'AmountString': '€ 54,50 per maand',
+                'IsAction': false,
+                'Description': 'Plan ONE',
+                'ActionInfo': '',
+                'PaymentMethodString': 'Factuur',
+              },
+            ],
+          },
+          'MembershipDefinition/Conditions' => {
+            'Response': 'Succes',
+            'IBANMandatory': true,
+            'Conditions': [
+              {
+                'HasBase64': true,
+                'ConditionType': 'AVG',
+                'Text': 'Ik ga akkoord',
+                'Mandatory': true,
+                'LinkText': 'privacy voorwaarden*',
+              },
+            ],
+          },
+          _ => {
+            'FirstCostAmount': 0,
+            'FirstCostString': 'Kosten abonnement 1e periode tot 01-10-2026',
+            'TotalAmountString': '€ 29,75',
+            'TotalAmount': 29.75,
+            'Response': 'Succes',
+            'Deposits': [
+              {'Description': 'Inschrijfkosten', 'AmountString': '€ 29,75', 'Amount': 29.75},
+            ],
+            'FirstCostsAmountString': '€ 0,00',
+          },
+        }),
+      );
+      final offer = (await client.membershipOffers(7, 'nl')).single;
+      expect(
+        (offer.id, offer.amount, offer.paymentMethod),
+        (67523, '€ 54,50 per maand', 'Factuur'),
+      );
+      final conditions = await client.offerConditions(7, 'nl', offer.id);
+      expect(conditions.ibanRequired, isTrue);
+      expect(
+        (conditions.conditions.single.type, conditions.conditions.single.hasPdf),
+        ('AVG', true),
+      );
+      final costs = await client.firstCosts(7, 'nl', offer, start: DateTime(2026, 9, 22));
+      expect(
+        (costs.firstCosts, costs.total, costs.deposits.single.amount),
+        ('€ 0,00', '€ 29,75', '€ 29,75'),
+      );
+      expect(sent.last.$1.queryParameters['StartDate'], '2026-09-22');
+      // Only GETs: nothing in the offer screen can take out a membership.
+      expect(sent.every((r) => r.$1.method == 'GET'), isTrue);
+    });
+
+    test('a condition PDF comes as Base64', () async {
+      final client = api((_, _) => json({'Response': 'Succes', 'Base64': 'JVBERi0='}));
+      expect(await client.conditionPdf(7, 'nl', 'AVG'), [37, 80, 68, 70, 45]);
+      expect(sent.single.$1.queryParameters['ConditionType'], 'AVG');
+    });
+  });
 }

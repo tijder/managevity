@@ -855,4 +855,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get changeSend => 'Send request';
+
+  @override
+  String get moreOffers => 'Memberships on offer';
+
+  @override
+  String get offersSwitchTitle => 'Switch membership';
+
+  @override
+  String get membershipSeeSwitch => 'Switch options';
+
+  @override
+  String offerPaymentMethod(String method) {
+    return 'Payment: $method';
+  }
+
+  @override
+  String get offerPromotion => 'Promotion';
+
+  @override
+  String get offerStartToday => 'When starting today';
+
+  @override
+  String get offerTotal => 'Total';
+
+  @override
+  String get offerConditions => 'Conditions';
+
+  @override
+  String get offerRequired => 'required';
+
+  @override
+  String get offerIbanRequired => 'A bank account (IBAN) is required.';
+
+  @override
+  String get offerViaGym =>
+      'Taking out this membership, or switching to it, goes through your gym.';
 }

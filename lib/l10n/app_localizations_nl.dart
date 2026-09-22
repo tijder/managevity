@@ -855,4 +855,40 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get changeSend => 'Verzoek versturen';
+
+  @override
+  String get moreOffers => 'Aanbod abonnementen';
+
+  @override
+  String get offersSwitchTitle => 'Overstappen';
+
+  @override
+  String get membershipSeeSwitch => 'Overstapmogelijkheden';
+
+  @override
+  String offerPaymentMethod(String method) {
+    return 'Betaling: $method';
+  }
+
+  @override
+  String get offerPromotion => 'Actie';
+
+  @override
+  String get offerStartToday => 'Bij start vandaag';
+
+  @override
+  String get offerTotal => 'Totaal';
+
+  @override
+  String get offerConditions => 'Voorwaarden';
+
+  @override
+  String get offerRequired => 'verplicht';
+
+  @override
+  String get offerIbanRequired => 'Een rekeningnummer (IBAN) is verplicht.';
+
+  @override
+  String get offerViaGym =>
+      'Dit abonnement afsluiten, of ernaar overstappen, gaat via je sportschool.';
 }

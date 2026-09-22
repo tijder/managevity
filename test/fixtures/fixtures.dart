@@ -7,6 +7,7 @@ import 'package:managevity/models/guest_pass.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/location.dart';
 import 'package:managevity/models/membership.dart';
+import 'package:managevity/models/membership_offer.dart';
 import 'package:managevity/models/payment.dart';
 import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
@@ -217,6 +218,69 @@ class FakeSportivityApi extends SportivityApi {
 
   @override
   Future<List<Addon>> addons(int locationId) async => [...addonList];
+
+  var offerList = const [
+    MembershipOffer(id: 11, description: 'Off-peak', amount: '€ 24.95 per 4 weeks'),
+    MembershipOffer(
+      id: 12,
+      description: 'Unlimited',
+      amount: '€ 39.95 per 4 weeks',
+      promotion: true,
+    ),
+  ];
+  final pdfsRequested = <String>[];
+
+  @override
+  Future<List<MembershipOffer>> membershipOffers(int locationId, String language) async =>
+      offerList;
+
+  @override
+  Future<List<MembershipOffer>> upgradeOffers(
+    int locationId,
+    String language,
+    int membershipId,
+  ) async => offerList.skip(1).toList();
+
+  @override
+  Future<OfferConditions> offerConditions(int locationId, String language, int offerId) async =>
+      const OfferConditions(
+        ibanRequired: true,
+        conditions: [
+          OfferCondition(
+            type: 'GeneralTerms',
+            text: 'I accept',
+            linkText: 'general terms',
+            hasPdf: true,
+          ),
+        ],
+      );
+
+  @override
+  Future<FirstCosts> firstCosts(
+    int locationId,
+    String language,
+    MembershipOffer offer, {
+    required DateTime start,
+  }) async => const FirstCosts(
+    description: 'Until the end of the month',
+    firstCosts: '€ 12.40',
+    total: '€ 37.40',
+    deposits: [(description: 'Registration fee', amount: '€ 25.00')],
+  );
+
+  @override
+  Future<List<Addon>> offerAddons(
+    int locationId,
+    String language,
+    MembershipOffer offer, {
+    required DateTime start,
+  }) async => const [];
+
+  @override
+  Future<Uint8List> conditionPdf(int locationId, String language, String type) async {
+    pdfsRequested.add(type);
+    return Uint8List(0);
+  }
 
   /// ('freeze' | 'cancel' | 'withdraw', membership id, reason).
   final membershipChanges = <(String, int, Object?)>[];

@@ -251,5 +251,16 @@
   "withdrawConfirm": "Je gebruikt je herroepingsrecht voor {name}: het abonnement wordt ontbonden.",
   "changeReasonLine": "Reden: {reason}",
   "changeIsRequest": "Dit is een verzoek aan je sportschool, die het bevestigt.",
-  "changeSend": "Verzoek versturen"
+  "changeSend": "Verzoek versturen",
+  "moreOffers": "Aanbod abonnementen",
+  "offersSwitchTitle": "Overstappen",
+  "membershipSeeSwitch": "Overstapmogelijkheden",
+  "offerPaymentMethod": "Betaling: {method}",
+  "offerPromotion": "Actie",
+  "offerStartToday": "Bij start vandaag",
+  "offerTotal": "Totaal",
+  "offerConditions": "Voorwaarden",
+  "offerRequired": "verplicht",
+  "offerIbanRequired": "Een rekeningnummer (IBAN) is verplicht.",
+  "offerViaGym": "Dit abonnement afsluiten, of ernaar overstappen, gaat via je sportschool."
 }

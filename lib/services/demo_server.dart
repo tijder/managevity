@@ -116,6 +116,45 @@ class DemoServer implements HttpClientAdapter {
       // Step one only describes the change; step two carries it out.
       ('POST', 'AddOn/TurnOnOff') => _addonTerms(body),
       ('POST', 'AddOn/TurnOnOffConfirmation') => _addonSwitch(body),
+      ('GET', 'MembershipDefinition/MembershipDefinitions') => {
+        'Response': 'Succes',
+        'MembershipDefinitions': _offers,
+      },
+      ('GET', 'MembershipDefinition/Upgrade') => {
+        'Response': 'Succes',
+        'MembershipDefinitions': _offers.skip(1).toList(),
+      },
+      ('GET', 'MembershipDefinition/Conditions') => {
+        'Response': 'Succes',
+        'IBANMandatory': true,
+        'Conditions': [
+          {
+            'ConditionType': 'GeneralTerms',
+            'Text': 'I accept the general terms',
+            'LinkText': 'general terms',
+            'HasBase64': true,
+            'Mandatory': true,
+          },
+          {
+            'ConditionType': 'AVG',
+            'Text': 'I accept the privacy statement',
+            'LinkText': 'privacy statement*',
+            'HasBase64': true,
+            'Mandatory': true,
+          },
+        ],
+      },
+      ('GET', 'MembershipDefinition/FirstCosts') => {
+        'Response': 'Succes',
+        'FirstCostString': 'Membership until the end of this month',
+        'FirstCostsAmountString': '€ 12.40',
+        'TotalAmountString': '€ 37.40',
+        'Deposits': [
+          {'Description': 'Registration fee', 'AmountString': '€ 25.00', 'Amount': 25.0},
+        ],
+      },
+      ('GET', 'MembershipDefinition/Addons') => _addons(),
+      ('GET', 'MembershipDefinition/ConditionByType') => {'Response': 'Succes', 'Base64': _demoPdf},
       ('GET', 'ChangeMembership/CancellationReasons') => {
         'Response': 'Succes',
         'CancellationReasons': [
@@ -458,6 +497,33 @@ class DemoServer implements HttpClientAdapter {
       },
     ],
   };
+
+  static const _offers = [
+    {
+      'MembershipDefinitionId': 11,
+      'Description': 'Off-peak',
+      'AmountString': '€ 24.95 per 4 weeks',
+      'IsAction': false,
+      'ActionInfo': '',
+      'PaymentMethodString': 'Direct debit',
+    },
+    {
+      'MembershipDefinitionId': 12,
+      'Description': 'Unlimited',
+      'AmountString': '€ 39.95 per 4 weeks',
+      'IsAction': false,
+      'ActionInfo': '',
+      'PaymentMethodString': 'Direct debit',
+    },
+    {
+      'MembershipDefinitionId': 13,
+      'Description': 'Unlimited, 12 months',
+      'AmountString': '€ 34.95 per 4 weeks',
+      'IsAction': true,
+      'ActionInfo': 'First month free when you start this month.',
+      'PaymentMethodString': 'Direct debit',
+    },
+  ];
 
   Map<String, Object?> _addonTerms(Map<String, dynamic> body) {
     final id = body['AddonID'];

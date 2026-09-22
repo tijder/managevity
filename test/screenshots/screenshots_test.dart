@@ -53,6 +53,7 @@ const _pages = {
   'memberships': '/memberships',
   'profile': '/profile',
   'guests': '/guests',
+  'offers': '/offers',
   'news': '/news',
   'rules': '/info?rules=true',
   'favourites': '/favourites',

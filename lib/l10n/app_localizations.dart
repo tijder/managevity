@@ -1604,6 +1604,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send request'**
   String get changeSend;
+
+  /// No description provided for @moreOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Memberships on offer'**
+  String get moreOffers;
+
+  /// No description provided for @offersSwitchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch membership'**
+  String get offersSwitchTitle;
+
+  /// No description provided for @membershipSeeSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch options'**
+  String get membershipSeeSwitch;
+
+  /// No description provided for @offerPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment: {method}'**
+  String offerPaymentMethod(String method);
+
+  /// No description provided for @offerPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion'**
+  String get offerPromotion;
+
+  /// No description provided for @offerStartToday.
+  ///
+  /// In en, this message translates to:
+  /// **'When starting today'**
+  String get offerStartToday;
+
+  /// No description provided for @offerTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get offerTotal;
+
+  /// No description provided for @offerConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions'**
+  String get offerConditions;
+
+  /// No description provided for @offerRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'required'**
+  String get offerRequired;
+
+  /// No description provided for @offerIbanRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'A bank account (IBAN) is required.'**
+  String get offerIbanRequired;
+
+  /// No description provided for @offerViaGym.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking out this membership, or switching to it, goes through your gym.'**
+  String get offerViaGym;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

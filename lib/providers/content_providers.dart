@@ -7,6 +7,7 @@ import '../models/guest_pass.dart';
 import '../models/heatmap.dart';
 import '../models/invoice.dart';
 import '../models/membership.dart';
+import '../models/membership_offer.dart';
 import '../models/news_item.dart';
 import '../models/payment.dart';
 import '../models/profile_settings.dart';
@@ -103,3 +104,32 @@ final creditOptionsProvider = FutureProvider.autoDispose<List<CreditOption>>(
 final cancellationReasonsProvider = FutureProvider.autoDispose<List<CancellationReason>>(
   (ref) => ref.watch(apiProvider).cancellationReasons(ref.watch(locationIdProvider)),
 );
+
+/// The gym's offer in [language]; with [upgradeFrom], what that membership can switch to.
+final offersProvider = FutureProvider.autoDispose
+    .family<List<MembershipOffer>, ({String language, int? upgradeFrom})>((ref, key) {
+      final api = ref.watch(apiProvider);
+      final locationId = ref.watch(locationIdProvider);
+      return key.upgradeFrom == null
+          ? api.membershipOffers(locationId, key.language)
+          : api.upgradeOffers(locationId, key.language, key.upgradeFrom!);
+    });
+
+typedef OfferDetails = ({FirstCosts costs, OfferConditions conditions, List<Addon> addons});
+
+/// Everything behind one offer, fetched when it is opened; starting today.
+final offerDetailsProvider = FutureProvider.autoDispose
+    .family<OfferDetails, ({String language, int id, bool promotion})>((ref, key) async {
+      final api = ref.watch(apiProvider);
+      final locationId = ref.watch(locationIdProvider);
+      final offer = MembershipOffer(id: key.id, description: '', promotion: key.promotion);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final (costs, conditions, addons) = await (
+        api.firstCosts(locationId, key.language, offer, start: today),
+        api.offerConditions(locationId, key.language, key.id),
+        // Extra information: without it the offer is still worth seeing.
+        api.offerAddons(locationId, key.language, offer, start: today).catchError((_) => <Addon>[]),
+      ).wait;
+      return (costs: costs, conditions: conditions, addons: addons);
+    });

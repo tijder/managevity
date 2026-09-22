@@ -10,6 +10,7 @@ import '../models/invoice.dart';
 import '../models/lesson.dart';
 import '../models/location.dart';
 import '../models/membership.dart';
+import '../models/membership_offer.dart';
 import '../models/news_item.dart';
 import '../models/payment.dart';
 import '../models/profile_settings.dart';
@@ -538,6 +539,93 @@ class SportivityApi {
       },
     ),
   );
+
+  // ── The gym's offer (read-only) ───────────────────────────────────────────
+  //
+  // [language] is the app's language code ("nl", "en"): the texts come back in it.
+
+  Future<List<MembershipOffer>> membershipOffers(int locationId, String language) async => _items(
+    await _get('MembershipDefinition/MembershipDefinitions', {
+      'LocationId': locationId,
+      'Language': language,
+    }),
+    'MembershipDefinitions',
+    MembershipOffer.tryFromJson,
+  );
+
+  /// What [membershipId] can be switched to.
+  Future<List<MembershipOffer>> upgradeOffers(
+    int locationId,
+    String language,
+    int membershipId,
+  ) async => _items(
+    await _get('MembershipDefinition/Upgrade', {
+      'LocationId': locationId,
+      'Language': language,
+      'MembershipId': membershipId,
+    }),
+    'MembershipDefinitions',
+    MembershipOffer.tryFromJson,
+  );
+
+  Future<OfferConditions> offerConditions(int locationId, String language, int offerId) async {
+    final body = await _get('MembershipDefinition/Conditions', {
+      'LocationId': locationId,
+      'Language': language,
+      'MembershipDefinitionId': offerId,
+    });
+    return OfferConditions(
+      conditions: _items(body, 'Conditions', OfferCondition.tryFromJson),
+      ibanRequired: asBool(body['IBANMandatory']),
+    );
+  }
+
+  Future<FirstCosts> firstCosts(
+    int locationId,
+    String language,
+    MembershipOffer offer, {
+    required DateTime start,
+  }) async => FirstCosts.fromJson(
+    await _get('MembershipDefinition/FirstCosts', {
+      'LocationId': locationId,
+      'Language': language,
+      'MembershipDefinitionId': offer.id,
+      'StartDate': _date(start),
+      'IsAction': offer.promotion,
+      'UseNoDeposits': false,
+    }),
+  );
+
+  Future<List<Addon>> offerAddons(
+    int locationId,
+    String language,
+    MembershipOffer offer, {
+    required DateTime start,
+  }) async => _items(
+    await _get('MembershipDefinition/Addons', {
+      'LocationId': locationId,
+      'Language': language,
+      'MembershipDefinitionId': offer.id,
+      'StartDate': _date(start),
+      'Promotion': offer.promotion,
+    }),
+    'AddOns',
+    Addon.tryFromJson,
+  );
+
+  /// The PDF of a condition ([OfferCondition.type]).
+  Future<Uint8List> conditionPdf(int locationId, String language, String type) async {
+    final body = await _get('MembershipDefinition/ConditionByType', {
+      'LocationId': locationId,
+      'Language': language,
+      'ConditionType': type,
+    });
+    final b64 = asString(body['Base64']);
+    if (b64 == null) {
+      throw SportivityException(AppError.noPdf, serverMessage: asString(body['Response']));
+    }
+    return base64Decode(b64);
+  }
 
   // ── Payments ──────────────────────────────────────────────────────────────
   //

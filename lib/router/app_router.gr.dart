@@ -339,6 +339,55 @@ class NewsRouteArgs {
 }
 
 /// generated route for
+/// [OffersScreen]
+class OffersRoute extends PageRouteInfo<OffersRouteArgs> {
+  OffersRoute({Key? key, int? upgradeFrom, List<PageRouteInfo>? children})
+    : super(
+        OffersRoute.name,
+        args: OffersRouteArgs(key: key, upgradeFrom: upgradeFrom),
+        rawQueryParams: {'upgradeFrom': upgradeFrom},
+        initialChildren: children,
+      );
+
+  static const String name = 'OffersRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final queryParams = data.queryParams;
+      final args = data.argsAs<OffersRouteArgs>(
+        orElse: () =>
+            OffersRouteArgs(upgradeFrom: queryParams.optInt('upgradeFrom')),
+      );
+      return OffersScreen(key: args.key, upgradeFrom: args.upgradeFrom);
+    },
+  );
+}
+
+class OffersRouteArgs {
+  const OffersRouteArgs({this.key, this.upgradeFrom});
+
+  final Key? key;
+
+  final int? upgradeFrom;
+
+  @override
+  String toString() {
+    return 'OffersRouteArgs{key: $key, upgradeFrom: $upgradeFrom}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! OffersRouteArgs) return false;
+    return key == other.key && upgradeFrom == other.upgradeFrom;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ upgradeFrom.hashCode;
+}
+
+/// generated route for
 /// [ProfileScreen]
 class ProfileRoute extends PageRouteInfo<void> {
   const ProfileRoute({List<PageRouteInfo>? children})

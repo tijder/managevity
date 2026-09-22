@@ -17,6 +17,7 @@ import '../screens/memberships_screen.dart';
 import '../screens/more_screen.dart';
 import '../screens/my_lessons_screen.dart';
 import '../screens/news_screen.dart';
+import '../screens/offers_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/schedule_screen.dart';
 import '../screens/sync_settings_screen.dart';
@@ -57,6 +58,7 @@ class AppRouter extends RootStackRouter {
       AutoRoute(path: '/memberships', page: MembershipsRoute.page, guards: [guard]),
       AutoRoute(path: '/invoices', page: InvoicesRoute.page, guards: [guard]),
       AutoRoute(path: '/guests', page: GuestsRoute.page, guards: [guard]),
+      AutoRoute(path: '/offers', page: OffersRoute.page, guards: [guard]),
     ];
   }
 }
