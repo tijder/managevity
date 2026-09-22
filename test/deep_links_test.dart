@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:managevity/l10n/l10n.dart';
+import 'package:managevity/models/gym_extras.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/services.dart';
 import 'package:managevity/providers/sync_provider.dart';
 import 'package:managevity/router/app_router.dart';
 import 'package:managevity/screens/about_screen.dart';
+import 'package:managevity/screens/guests_screen.dart';
 import 'package:managevity/screens/invoices_screen.dart';
 import 'package:managevity/screens/lesson_detail_screen.dart';
 import 'package:managevity/screens/location_screen.dart';
@@ -31,6 +33,8 @@ void main() {
     required String url,
     bool loggedIn = true,
     bool hasLocation = true,
+    List<GymButton> buttons = const [],
+    List<Uri>? opened,
   }) async {
     tester.view.physicalSize = const Size(500, 1200);
     tester.view.devicePixelRatio = 1;
@@ -38,7 +42,7 @@ void main() {
 
     final api = FakeSportivityApi(
       lessons: [lessonFixture(id: 5, description: 'Judo', start: tomorrow)],
-    );
+    )..buttonList = buttons;
     final store = FakeCredentialStore(session: loggedIn ? const Session(token: 'fake') : null);
     api.session = store.session;
     final container = ProviderContainer(
@@ -53,6 +57,10 @@ void main() {
         syncIndexStoreProvider.overrideWithValue(MemorySyncIndexStore()),
         syncTargetFactoryProvider.overrideWithValue((_) async => null),
         syncLockProvider.overrideWithValue(noSyncLock),
+        openExternalProvider.overrideWithValue((uri) async {
+          opened?.add(uri);
+          return true;
+        }),
       ],
     );
     final router = AppRouter(container);
@@ -103,6 +111,29 @@ void main() {
 
     await pumpApp(tester, url: '/invoices');
     expect(find.byType(InvoicesScreen), findsOneWidget);
+    await _cleanup();
+
+    await pumpApp(tester, url: '/guests');
+    expect(find.byType(GuestsScreen), findsOneWidget);
+    await _cleanup();
+
+    await pumpApp(tester, url: '/offers?upgradeFrom=1');
+    expect(find.text('Switch membership'), findsOneWidget);
+    await _cleanup();
+  });
+
+  testWidgets("the gym's own links are in More, and open outside the app", (tester) async {
+    final opened = <Uri>[];
+    final link = Uri.parse('https://example.org/timetable');
+    await pumpApp(
+      tester,
+      url: '/more',
+      buttons: [GymButton(label: 'Timetable', uri: link)],
+      opened: opened,
+    );
+    await tester.tap(find.text('Timetable'));
+    await tester.pumpAndSettle();
+    expect(opened, [link]);
     await _cleanup();
   });
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/l10n.dart';
 import '../providers/content_providers.dart';
+import '../providers/services.dart';
 import '../providers/session_provider.dart';
 import '../router/app_router.dart';
 import '../widgets/customer_avatar.dart';
@@ -21,6 +22,8 @@ class MoreScreen extends ConsumerWidget {
     final location = ref.watch(sessionProvider).value?.location;
     final customer = ref.watch(userContentProvider).value?.customer;
     final router = context.router.root;
+    final buttons = ref.watch(gymButtonsProvider).value ?? const [];
+    final logo = ref.watch(gymLogoProvider).value;
 
     Widget item(IconData icon, String title, PageRouteInfo route, {String? subtitle}) => ListTile(
       leading: Icon(icon),
@@ -91,10 +94,28 @@ class MoreScreen extends ConsumerWidget {
           ]),
           SectionTitle(l10n.moreSectionGym),
           group([
+            if (logo != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  height: 56,
+                  child: logo.bytes != null
+                      ? Image.memory(logo.bytes!, errorBuilder: (_, _, _) => const SizedBox())
+                      : Image.network('${logo.uri}', errorBuilder: (_, _, _) => const SizedBox()),
+                ),
+              ),
             item(Icons.campaign_outlined, l10n.moreNews, NewsRoute(notifications: false)),
             item(Icons.notifications_none, l10n.moreNotifications, NewsRoute(notifications: true)),
             item(Icons.contact_support_outlined, l10n.moreContact, InfoRoute(rules: false)),
             item(Icons.gavel_outlined, l10n.moreRules, InfoRoute(rules: true)),
+            // Links the gym put in its own app.
+            for (final button in buttons)
+              ListTile(
+                leading: const Icon(Icons.link),
+                title: Text(button.label),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => ref.read(openExternalProvider)(button.uri),
+              ),
           ]),
           SectionTitle(l10n.moreSectionAccount),
           group([

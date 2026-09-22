@@ -227,6 +227,13 @@ class DemoServer implements HttpClientAdapter {
         return {'Response': 'Succes'};
       }(),
       ('GET', 'OptIn') => {'Response': 'Succes', ..._optIn},
+      ('GET', 'Button') => {
+        'Response': 'Succes',
+        'Buttons': [
+          {'Text': 'Class timetable (PDF)', 'Url': 'https://example.org/timetable.pdf'},
+        ],
+      },
+      ('POST', 'Location/LogoLocation') => {'Response': 'No logo', 'Logos': <Object>[]},
       ('GET', 'Credits/GetCreditOptions') => {
         'Response': 'Succes',
         'CreditOptions': [

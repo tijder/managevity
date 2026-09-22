@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:managevity/models/guest_pass.dart';
+import 'package:managevity/models/gym_extras.dart';
 import 'package:managevity/models/membership.dart';
 import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
@@ -320,6 +321,39 @@ void main() {
       final client = api((_, _) => json({'Response': 'Succes', 'Base64': 'JVBERi0='}));
       expect(await client.conditionPdf(7, 'nl', 'AVG'), [37, 80, 68, 70, 45]);
       expect(sent.single.$1.queryParameters['ConditionType'], 'AVG');
+    });
+  });
+
+  group('what the gym shows in its own app', () {
+    test('a button needs a label and a web address, or it is not shown', () {
+      expect(
+        GymButton.tryFromJson({'Text': 'Timetable', 'Url': 'https://example.org/t'})?.uri.host,
+        'example.org',
+      );
+      expect(GymButton.tryFromJson({'Text': 'Timetable'}), isNull);
+      expect(GymButton.tryFromJson({'Text': 'X', 'Url': 'javascript:alert(1)'}), isNull);
+    });
+
+    test('the logo is asked for without posing as the official app', () async {
+      final client = api(
+        (_, _) => json({
+          'Response': 'Succes',
+          'Logos': [
+            {'Base64': 'iVBORw0KGgo='},
+          ],
+        }),
+      );
+      final logo = await client.gymLogo();
+      expect(logo?.bytes, isNotEmpty);
+      expect(
+        sent.single.$1.headers.keys.map((k) => k.toLowerCase()),
+        isNot(contains('bundleidentifier')),
+      );
+    });
+
+    test('no logos: no logo', () async {
+      final client = api((_, _) => json({'Response': 'No logo'}));
+      expect(await client.gymLogo(), isNull);
     });
   });
 }

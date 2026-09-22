@@ -4,7 +4,8 @@
 //   SPORTIVITY_USER=… SPORTIVITY_PASSWORD=… dart run tool/probe.dart
 //   (or the same two lines in .env — which is in .gitignore)
 //
-// Only does GETs plus the login. Nothing is booked, changed or registered. Endpoints that
+// Only reads: GETs, the login, and Location/LogoLocation (a POST that fetches a logo).
+// Nothing is booked, changed or registered. Endpoints that
 // could start something (Payment/*: a payment link may open a transaction) or that send
 // data somewhere (IBANCheck) are deliberately left out.
 //
@@ -183,6 +184,19 @@ Future<void> main(List<String> args) async {
     await get('GuestPasses', '/TogetherEntrance', loc);
     await get('GuestCheckMembership', '/TogetherEntrance/CheckMembership', loc);
     await get('Countries', '/UserContent/Countries', loc);
+    // A POST that only reads; without BundleIdentifier, as the app sends it.
+    await record(
+      'LogoLocation',
+      await client.post(
+        Uri.parse('$_base/Location/LogoLocation'),
+        headers: {...auth, 'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'IsCallNaar2eOmgeving': false,
+          'Flavour': '',
+          'IsCallNaar4eOmgeving': false,
+        }),
+      ),
+    );
 
     final content = await get('UserContent_withId', '/UserContent', loc);
     final customer = content is Map ? content['Customer'] : null;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/customer.dart';
 import '../models/guest_pass.dart';
+import '../models/gym_extras.dart';
 import '../models/heatmap.dart';
 import '../models/invoice.dart';
 import '../models/membership.dart';
@@ -133,3 +134,17 @@ final offerDetailsProvider = FutureProvider.autoDispose
       ).wait;
       return (costs: costs, conditions: conditions, addons: addons);
     });
+
+/// Decoration: an error means no buttons, not a failing screen.
+final gymButtonsProvider = FutureProvider.autoDispose<List<GymButton>>(
+  (ref) => ref
+      .watch(apiProvider)
+      .buttons(ref.watch(locationIdProvider))
+      .catchError((_) => <GymButton>[]),
+);
+
+/// Decoration as well: an error means no logo.
+final gymLogoProvider = FutureProvider.autoDispose<GymLogo?>((ref) {
+  ref.watch(locationIdProvider);
+  return ref.watch(apiProvider).gymLogo().then<GymLogo?>((l) => l).catchError((_) => null);
+});

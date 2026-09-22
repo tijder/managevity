@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../models/customer.dart';
 import '../models/guest_pass.dart';
+import '../models/gym_extras.dart';
 import '../models/heatmap.dart';
 import '../models/invoice.dart';
 import '../models/lesson.dart';
@@ -539,6 +540,23 @@ class SportivityApi {
       },
     ),
   );
+
+  // ── What the gym shows in its own app ────────────────────────────────────
+
+  Future<List<GymButton>> buttons(int locationId) async =>
+      _items(await _get('Button', {'LocationId': locationId}), 'Buttons', GymButton.tryFromJson);
+
+  /// A POST, but it only reads. Sent without the `BundleIdentifier` header: that is the
+  /// official app's identity, and this app does not pose as it. Null when there is no logo
+  /// this way.
+  Future<GymLogo?> gymLogo() async {
+    final body = await _send(
+      'POST',
+      'Location/LogoLocation',
+      data: {'IsCallNaar2eOmgeving': false, 'Flavour': '', 'IsCallNaar4eOmgeving': false},
+    );
+    return asList(body['Logos']).map(GymLogo.tryFromJson).nonNulls.firstOrNull;
+  }
 
   // ── The gym's offer (read-only) ───────────────────────────────────────────
   //

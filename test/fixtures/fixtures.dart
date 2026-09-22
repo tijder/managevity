@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import 'package:managevity/models/customer.dart';
 import 'package:managevity/models/guest_pass.dart';
+import 'package:managevity/models/gym_extras.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/location.dart';
 import 'package:managevity/models/membership.dart';
@@ -218,6 +219,14 @@ class FakeSportivityApi extends SportivityApi {
 
   @override
   Future<List<Addon>> addons(int locationId) async => [...addonList];
+
+  var buttonList = <GymButton>[];
+
+  @override
+  Future<List<GymButton>> buttons(int locationId) async => buttonList;
+
+  @override
+  Future<GymLogo?> gymLogo() async => null;
 
   var offerList = const [
     MembershipOffer(id: 11, description: 'Off-peak', amount: '€ 24.95 per 4 weeks'),
