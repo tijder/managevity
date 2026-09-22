@@ -17,7 +17,9 @@ import '../widgets/responsive.dart';
 import '../widgets/placeholders.dart';
 import '../widgets/refreshable.dart';
 
-/// Read-only: changing, freezing and cancelling are deliberately not part of this app.
+/// Memberships, credit and add-ons. Freezing, cancelling, withdrawing, switching add-ons
+/// and topping up are offered only where the server allows them, and always ask first.
+/// Taking out or converting a membership is not here: that goes through the gym.
 @RoutePage()
 class MembershipsScreen extends ConsumerWidget {
   const MembershipsScreen({super.key});
@@ -125,6 +127,7 @@ class MembershipsScreen extends ConsumerWidget {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Text(m.blockageText!, style: TextStyle(color: scheme.error)),
                             ),
+                          _MembershipActions(membership: m),
                         ],
                       ),
                     ),
@@ -304,6 +307,258 @@ class _AddonListState extends ConsumerState<_AddonList> {
           ],
         ],
       ),
+    );
+  }
+}
+
+enum _Change { freeze, cancel, withdraw }
+
+/// What the user filled in for a change.
+typedef _ChangeRequest = ({
+  DateTime from,
+  DateTime? until,
+  String? note,
+  CancellationReason? reason,
+});
+
+/// Freeze, cancel and withdraw, each only when the server allows it for this membership.
+class _MembershipActions extends ConsumerStatefulWidget {
+  const _MembershipActions({required this.membership});
+
+  final Membership membership;
+
+  @override
+  ConsumerState<_MembershipActions> createState() => _MembershipActionsState();
+}
+
+class _MembershipActionsState extends ConsumerState<_MembershipActions> {
+  bool _busy = false;
+
+  Future<void> _start(_Change change) async {
+    final m = widget.membership;
+    final request = await showDialog<_ChangeRequest>(
+      context: context,
+      builder: (_) => _ChangeForm(change: change, membership: m),
+    );
+    if (request == null || !mounted) return;
+    final l10n = context.l10n;
+    final date = DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag());
+    final reason = request.reason?.description ?? request.note;
+    final ok = await confirmAction(
+      context,
+      title: switch (change) {
+        _Change.freeze => l10n.membershipFreeze,
+        _Change.cancel => l10n.membershipCancel,
+        _Change.withdraw => l10n.membershipWithdraw,
+      },
+      lines: [
+        switch (change) {
+          _Change.freeze => l10n.freezeConfirm(
+            m.description,
+            date.format(request.from),
+            date.format(request.until!),
+          ),
+          _Change.cancel => l10n.cancelConfirm(m.description, date.format(request.from)),
+          _Change.withdraw => l10n.withdrawConfirm(m.description),
+        },
+        if (reason != null && reason.isNotEmpty) l10n.changeReasonLine(reason),
+        l10n.changeIsRequest,
+      ],
+      confirmLabel: l10n.changeSend,
+      // A freeze ends by itself; a cancellation or withdrawal cannot be taken back here.
+      irreversible: change != _Change.freeze,
+    );
+    if (!ok || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final api = ref.read(apiProvider);
+    setState(() => _busy = true);
+    try {
+      final message = await switch (change) {
+        _Change.freeze => api.freezeMembership(
+          m,
+          reason: request.note ?? '',
+          from: request.from,
+          until: request.until!,
+        ),
+        _Change.cancel => api.cancelMembership(m, from: request.from, reason: request.reason!),
+        _Change.withdraw => api.withdrawMembership(m, from: request.from, reason: request.reason!),
+      };
+      messenger.showSnackBar(SnackBar(content: Text(message ?? l10n.actionDone)));
+      ref.invalidate(membershipsProvider);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final m = widget.membership;
+    if (m.terminated) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(l10n.membershipTerminated, style: Theme.of(context).textTheme.labelLarge),
+      );
+    }
+    final actions = [
+      if (m.allowFreeze) (_Change.freeze, l10n.membershipFreeze, Icons.ac_unit),
+      if (m.allowCancel) (_Change.cancel, l10n.membershipCancel, Icons.event_busy_outlined),
+      if (m.coolingOff) (_Change.withdraw, l10n.membershipWithdraw, Icons.undo),
+    ];
+    if (actions.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final (change, label, icon) in actions)
+            OutlinedButton.icon(
+              onPressed: _busy ? null : () => _start(change),
+              icon: Icon(icon),
+              label: Text(label),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChangeForm extends ConsumerStatefulWidget {
+  const _ChangeForm({required this.change, required this.membership});
+
+  final _Change change;
+  final Membership membership;
+
+  @override
+  ConsumerState<_ChangeForm> createState() => _ChangeFormState();
+}
+
+class _ChangeFormState extends ConsumerState<_ChangeForm> {
+  final _note = TextEditingController();
+  late DateTime _from;
+  late DateTime _until;
+  CancellationReason? _reason;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final today = DateUtils.dateOnly(DateTime.now());
+    final end = widget.membership.contractEndDate;
+    // Cancelling: by default at the end of the contract, the usual moment.
+    _from = widget.change == _Change.cancel && end != null && end.isAfter(today)
+        ? DateUtils.dateOnly(end)
+        : today;
+    _until = DateTime(_from.year, _from.month + 1, _from.day);
+  }
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<DateTime?> _pick(DateTime initial, DateTime first) {
+    final today = DateUtils.dateOnly(DateTime.now());
+    return showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
+      lastDate: DateTime(today.year + 3, today.month, today.day),
+    );
+  }
+
+  void _submit() {
+    final needsReason = widget.change != _Change.freeze;
+    if (needsReason && _reason == null) {
+      setState(() => _error = context.l10n.changeReasonRequired);
+      return;
+    }
+    Navigator.pop<_ChangeRequest>(context, (
+      from: _from,
+      until: widget.change == _Change.freeze ? _until : null,
+      note: _note.text.trim(),
+      reason: _reason,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final date = DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag());
+    final today = DateUtils.dateOnly(DateTime.now());
+    final change = widget.change;
+    final reasons = ref.watch(cancellationReasonsProvider);
+
+    Widget dateTile(String label, DateTime value, DateTime first, void Function(DateTime) set) =>
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.event_outlined),
+          title: Text(label),
+          subtitle: Text(date.format(value)),
+          onTap: () async {
+            final picked = await _pick(value, first);
+            if (picked != null) setState(() => set(picked));
+          },
+        );
+
+    return AlertDialog(
+      title: Text(switch (change) {
+        _Change.freeze => l10n.membershipFreeze,
+        _Change.cancel => l10n.membershipCancel,
+        _Change.withdraw => l10n.membershipWithdraw,
+      }),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(widget.membership.description, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            if (change == _Change.freeze)
+              TextField(
+                controller: _note,
+                decoration: InputDecoration(labelText: l10n.changeReason),
+              )
+            else
+              switch (reasons) {
+                AsyncData(:final value) => DropdownButtonFormField<CancellationReason>(
+                  initialValue: _reason,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: l10n.changeReason, errorText: _error),
+                  items: [
+                    for (final r in value) DropdownMenuItem(value: r, child: Text(r.description)),
+                  ],
+                  onChanged: (r) => setState(() {
+                    _reason = r;
+                    _error = null;
+                  }),
+                ),
+                AsyncError(:final error) => Text(describeError(l10n, error)),
+                _ => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              },
+            // The right of withdrawal applies now; there is no date to choose.
+            if (change != _Change.withdraw)
+              dateTile(l10n.changeFrom, _from, today, (d) {
+                _from = d;
+                if (!_until.isAfter(d)) _until = DateTime(d.year, d.month + 1, d.day);
+              }),
+            if (change == _Change.freeze)
+              dateTile(l10n.changeUntil, _until, _from, (d) => _until = d),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.back)),
+        FilledButton(onPressed: _submit, child: Text(l10n.next)),
+      ],
     );
   }
 }

@@ -259,7 +259,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get membershipReadOnly =>
-      'Abonnement wijzigen, bevriezen of opzeggen kan alleen in de officiële app of bij de balie.';
+      'Bevriezen, opzeggen en herroepen zijn verzoeken aan je sportschool; die bevestigt ze. Een abonnement afsluiten of omzetten gaat via je sportschool.';
 
   @override
   String get addonOn => 'Aan';
@@ -805,4 +805,54 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get next => 'Volgende';
+
+  @override
+  String get membershipFreeze => 'Bevriezen';
+
+  @override
+  String get membershipCancel => 'Opzeggen';
+
+  @override
+  String get membershipWithdraw => 'Herroepen';
+
+  @override
+  String get membershipTerminated => 'Opgezegd';
+
+  @override
+  String get changeReason => 'Reden';
+
+  @override
+  String get changeReasonRequired => 'Kies een reden';
+
+  @override
+  String get changeFrom => 'Vanaf';
+
+  @override
+  String get changeUntil => 'Tot en met';
+
+  @override
+  String freezeConfirm(String name, String from, String until) {
+    return '$name wordt bevroren van $from tot en met $until.';
+  }
+
+  @override
+  String cancelConfirm(String name, String date) {
+    return 'Je zegt $name op per $date.';
+  }
+
+  @override
+  String withdrawConfirm(String name) {
+    return 'Je gebruikt je herroepingsrecht voor $name: het abonnement wordt ontbonden.';
+  }
+
+  @override
+  String changeReasonLine(String reason) {
+    return 'Reden: $reason';
+  }
+
+  @override
+  String get changeIsRequest => 'Dit is een verzoek aan je sportschool, die het bevestigt.';
+
+  @override
+  String get changeSend => 'Verzoek versturen';
 }

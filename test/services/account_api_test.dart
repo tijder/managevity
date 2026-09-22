@@ -193,4 +193,62 @@ void main() {
       );
     });
   });
+
+  group('membership changes', () {
+    const membership = Membership(id: 31, description: 'Unlimited');
+    const reason = CancellationReason(id: 146464, description: 'Other gym');
+
+    test('each sends exactly the membership, the dates and the reason', () async {
+      final client = api((_, _) => json({'Response': 'Verzoek ontvangen', 'Warning': false}));
+      await client.freezeMembership(
+        membership,
+        reason: 'Holiday',
+        from: DateTime(2026, 10, 1),
+        until: DateTime(2026, 10, 31),
+      );
+      await client.cancelMembership(membership, from: DateTime(2027, 1, 1), reason: reason);
+      await client.withdrawMembership(membership, from: DateTime(2026, 9, 22), reason: reason);
+      expect(sent.map((r) => r.$1.path), [
+        'ChangeMembership/Freeze',
+        'ChangeMembership/Cancel',
+        'ChangeMembership/RightOfWithdrawal',
+      ]);
+      expect(sent.map((r) => r.$2), [
+        {
+          'MembershipID': 31,
+          'Reason': 'Holiday',
+          'StartDate': '2026-10-01',
+          'FreezeTillDate': '2026-10-31',
+        },
+        {'MembershipID': 31, 'StartDate': '2027-01-01', 'TerminationId': 146464},
+        {'MembershipID': 31, 'StartDate': '2026-09-22', 'TerminationId': 146464},
+      ]);
+    });
+
+    test('a warning is a refusal, with the reason', () async {
+      final client = api(
+        (_, _) => json({'Response': 'Opzeggen kan pas na 12 maanden', 'Warning': true}),
+      );
+      await expectLater(
+        client.cancelMembership(membership, from: DateTime(2027, 1, 1), reason: reason),
+        refusedWith('Opzeggen kan pas na 12 maanden'),
+      );
+    });
+
+    test('the flags from the real data are read', () {
+      final m = Membership.tryFromJson({
+        'MembershipID': 1,
+        'AllowFreeze': false,
+        'AllowCancel': true,
+        'CoolingOff': false,
+        'CanConvert': true,
+        'OnlyConvertEndContract': false,
+        'Terminated': false,
+      })!;
+      expect(
+        (m.allowFreeze, m.allowCancel, m.coolingOff, m.canConvert),
+        (false, true, false, true),
+      );
+    });
+  });
 }

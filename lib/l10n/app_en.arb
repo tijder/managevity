@@ -82,7 +82,7 @@
   "membershipCreditsLeft": "Booking credits left",
   "membershipUnlimited": "Unlimited",
   "membershipAddons": "Add-ons",
-  "membershipReadOnly": "Changing, freezing or cancelling a membership is only possible in the official app or at the desk.",
+  "membershipReadOnly": "Freezing, cancelling and withdrawing are requests to your gym; it confirms them. Taking out or converting a membership goes through your gym.",
   "addonOn": "On",
   "addonOff": "Off",
   "syncTarget": "Sync to",
@@ -435,5 +435,56 @@
   "addonServerSays": "Your gym says:",
   "addonMandatory": "Required",
   "confirm": "Confirm",
-  "next": "Next"
+  "next": "Next",
+  "membershipFreeze": "Freeze",
+  "membershipCancel": "Cancel membership",
+  "membershipWithdraw": "Withdraw",
+  "membershipTerminated": "Cancelled",
+  "changeReason": "Reason",
+  "changeReasonRequired": "Choose a reason",
+  "changeFrom": "From",
+  "changeUntil": "Until",
+  "freezeConfirm": "{name} is frozen from {from} up to and including {until}.",
+  "@freezeConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelConfirm": "You cancel {name} as of {date}.",
+  "@cancelConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "withdrawConfirm": "You use your right of withdrawal for {name}: the membership is dissolved.",
+  "@withdrawConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "changeReasonLine": "Reason: {reason}",
+  "@changeReasonLine": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "changeIsRequest": "This is a request to your gym, which confirms it.",
+  "changeSend": "Send request"
 }

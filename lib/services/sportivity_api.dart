@@ -240,6 +240,58 @@ class SportivityApi {
     Addon.tryFromJson,
   );
 
+  Future<List<CancellationReason>> cancellationReasons(int locationId) async => _items(
+    await _get('ChangeMembership/CancellationReasons', {'LocationId': locationId}),
+    'CancellationReasons',
+    CancellationReason.tryFromJson,
+  );
+
+  // Freezing, cancelling and withdrawing are requests to the gym; the answer (`EmailResponse`)
+  // says what happens next. Only called after the app has asked, twice for the last two.
+
+  Future<String?> freezeMembership(
+    Membership membership, {
+    required String reason,
+    required DateTime from,
+    required DateTime until,
+  }) async => _outcome(
+    await _send(
+      'POST',
+      'ChangeMembership/Freeze',
+      data: {
+        'MembershipID': membership.id,
+        'Reason': reason,
+        'StartDate': _date(from),
+        'FreezeTillDate': _date(until),
+      },
+    ),
+  );
+
+  Future<String?> cancelMembership(
+    Membership membership, {
+    required DateTime from,
+    required CancellationReason reason,
+  }) async => _outcome(
+    await _send(
+      'POST',
+      'ChangeMembership/Cancel',
+      data: {'MembershipID': membership.id, 'StartDate': _date(from), 'TerminationId': reason.id},
+    ),
+  );
+
+  /// The right of withdrawal, within the cooling-off period.
+  Future<String?> withdrawMembership(
+    Membership membership, {
+    required DateTime from,
+    required CancellationReason reason,
+  }) async => _outcome(
+    await _send(
+      'POST',
+      'ChangeMembership/RightOfWithdrawal',
+      data: {'MembershipID': membership.id, 'StartDate': _date(from), 'TerminationId': reason.id},
+    ),
+  );
+
   /// The add-ons that go with one membership, including the ones that are off.
   Future<List<Addon>> membershipAddons(int membershipId) async => _items(
     await _get('AddOn/MembershipAddon', {'MembershipId': membershipId}),

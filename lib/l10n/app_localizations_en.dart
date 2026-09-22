@@ -259,7 +259,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get membershipReadOnly =>
-      'Changing, freezing or cancelling a membership is only possible in the official app or at the desk.';
+      'Freezing, cancelling and withdrawing are requests to your gym; it confirms them. Taking out or converting a membership goes through your gym.';
 
   @override
   String get addonOn => 'On';
@@ -805,4 +805,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get next => 'Next';
+
+  @override
+  String get membershipFreeze => 'Freeze';
+
+  @override
+  String get membershipCancel => 'Cancel membership';
+
+  @override
+  String get membershipWithdraw => 'Withdraw';
+
+  @override
+  String get membershipTerminated => 'Cancelled';
+
+  @override
+  String get changeReason => 'Reason';
+
+  @override
+  String get changeReasonRequired => 'Choose a reason';
+
+  @override
+  String get changeFrom => 'From';
+
+  @override
+  String get changeUntil => 'Until';
+
+  @override
+  String freezeConfirm(String name, String from, String until) {
+    return '$name is frozen from $from up to and including $until.';
+  }
+
+  @override
+  String cancelConfirm(String name, String date) {
+    return 'You cancel $name as of $date.';
+  }
+
+  @override
+  String withdrawConfirm(String name) {
+    return 'You use your right of withdrawal for $name: the membership is dissolved.';
+  }
+
+  @override
+  String changeReasonLine(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get changeIsRequest => 'This is a request to your gym, which confirms it.';
+
+  @override
+  String get changeSend => 'Send request';
 }

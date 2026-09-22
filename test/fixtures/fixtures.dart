@@ -218,6 +218,46 @@ class FakeSportivityApi extends SportivityApi {
   @override
   Future<List<Addon>> addons(int locationId) async => [...addonList];
 
+  /// ('freeze' | 'cancel' | 'withdraw', membership id, reason).
+  final membershipChanges = <(String, int, Object?)>[];
+
+  @override
+  Future<List<CancellationReason>> cancellationReasons(int locationId) async => const [
+    CancellationReason(id: 1, description: 'Moving house'),
+    CancellationReason(id: 2, description: 'Too expensive'),
+  ];
+
+  @override
+  Future<String?> freezeMembership(
+    Membership membership, {
+    required String reason,
+    required DateTime from,
+    required DateTime until,
+  }) async {
+    membershipChanges.add(('freeze', membership.id, reason));
+    return 'Freeze requested';
+  }
+
+  @override
+  Future<String?> cancelMembership(
+    Membership membership, {
+    required DateTime from,
+    required CancellationReason reason,
+  }) async {
+    membershipChanges.add(('cancel', membership.id, reason.id));
+    return 'Cancellation received';
+  }
+
+  @override
+  Future<String?> withdrawMembership(
+    Membership membership, {
+    required DateTime from,
+    required CancellationReason reason,
+  }) async {
+    membershipChanges.add(('withdraw', membership.id, reason.id));
+    return 'Withdrawal received';
+  }
+
   /// ('request' | 'confirm', add-on id, on).
   final addonCalls = <(String, int, bool)>[];
 

@@ -99,3 +99,7 @@ final countriesProvider = FutureProvider.autoDispose<List<Country>>(
 final creditOptionsProvider = FutureProvider.autoDispose<List<CreditOption>>(
   (ref) => ref.watch(apiProvider).creditOptions(ref.watch(locationIdProvider)),
 );
+
+final cancellationReasonsProvider = FutureProvider.autoDispose<List<CancellationReason>>(
+  (ref) => ref.watch(apiProvider).cancellationReasons(ref.watch(locationIdProvider)),
+);

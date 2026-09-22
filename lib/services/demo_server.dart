@@ -31,6 +31,8 @@ class DemoServer implements HttpClientAdapter {
   final _guests = <Map<String, Object?>>[];
   var _language = 'en_GB';
   final _addonOn = <int, bool>{1: true, 2: false};
+  DateTime? _cancelledPer;
+  (String, String)? _frozen;
   var _optIn = <String, Object?>{'OptIn': true, 'OptInCalls': false, 'OptInWhatsapp': false};
   var _nextGuestId = 1;
   var _contact = <String, Object?>{
@@ -114,6 +116,28 @@ class DemoServer implements HttpClientAdapter {
       // Step one only describes the change; step two carries it out.
       ('POST', 'AddOn/TurnOnOff') => _addonTerms(body),
       ('POST', 'AddOn/TurnOnOffConfirmation') => _addonSwitch(body),
+      ('GET', 'ChangeMembership/CancellationReasons') => {
+        'Response': 'Succes',
+        'CancellationReasons': [
+          {'TerminationId': 1, 'Description': 'Moving house'},
+          {'TerminationId': 2, 'Description': 'Too expensive'},
+          {'TerminationId': 3, 'Description': 'Injury'},
+          {'TerminationId': 4, 'Description': 'Other'},
+        ],
+      },
+      ('POST', 'ChangeMembership/Freeze') => () {
+        _frozen = ('${body['StartDate']}', '${body['FreezeTillDate']}');
+        return {
+          'Response':
+              'Your request to freeze from ${_frozen!.$1} to ${_frozen!.$2} was sent (demo).',
+          'Warning': false,
+        };
+      }(),
+      ('POST', 'ChangeMembership/Cancel' || 'ChangeMembership/RightOfWithdrawal') => () {
+        if (body['TerminationId'] is! int) return {'Response': 'Choose a reason.', 'Warning': true};
+        _cancelledPer = DateTime.tryParse('${body['StartDate']}');
+        return {'Response': 'Your cancellation was received (demo).', 'Warning': false};
+      }(),
       ('GET', 'Location/GetLocationsOfCompany') => {
         'Response': 'OK',
         'Locationss': [
@@ -405,6 +429,12 @@ class DemoServer implements HttpClientAdapter {
         'ContractEndDate': DateTime(_today().year + 1, 3).toIso8601String(),
         'UnlimitedVisits': true,
         'UnlimitedReservations': true,
+        'AllowFreeze': _frozen == null && _cancelledPer == null,
+        'AllowCancel': _cancelledPer == null,
+        'CoolingOff': false,
+        'CanConvert': true,
+        'Terminated': _cancelledPer != null,
+        'CancelledPerDate': _cancelledPer?.toIso8601String(),
       },
     ],
   };

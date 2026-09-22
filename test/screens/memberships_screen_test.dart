@@ -87,6 +87,74 @@ void main() {
     expect(api.addonCalls.last, ('confirm', 2, true));
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
   });
+
+  testWidgets('only the changes the server allows are offered', (tester) async {
+    final api = FakeSportivityApi()
+      ..membershipList = [const Membership(id: 1, description: 'Unlimited', allowFreeze: true)];
+    await pump(tester, api);
+    expect(find.text('Freeze'), findsOneWidget);
+    expect(find.text('Cancel membership'), findsNothing);
+    expect(find.text('Withdraw'), findsNothing);
+  });
+
+  testWidgets('cancelling: a reason, then two questions, then the request', (tester) async {
+    final api = FakeSportivityApi()
+      ..membershipList = [const Membership(id: 1, description: 'Unlimited', allowCancel: true)];
+    await pump(tester, api);
+    await tester.tap(find.text('Cancel membership'));
+    await tester.pumpAndSettle();
+
+    // Without a reason it does not go further.
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a reason'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButtonFormField<CancellationReason>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Too expensive').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('You cancel Unlimited as of'), findsOneWidget);
+    expect(find.text('Reason: Too expensive'), findsOneWidget);
+    await tester.tap(find.text('Send request'));
+    await tester.pumpAndSettle();
+    // The second question; no to it stops everything.
+    expect(find.text('Are you sure?'), findsOneWidget);
+    await tester.tap(find.text('Back'));
+    await tester.pumpAndSettle();
+    expect(api.membershipChanges, isEmpty);
+
+    await tester.tap(find.text('Cancel membership'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<CancellationReason>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Too expensive').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send request'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send request'));
+    await tester.pumpAndSettle();
+    expect(api.membershipChanges, [('cancel', 1, 2)]);
+  });
+
+  testWidgets('freezing asks once, with the dates', (tester) async {
+    final api = FakeSportivityApi()
+      ..membershipList = [const Membership(id: 1, description: 'Unlimited', allowFreeze: true)];
+    await pump(tester, api);
+    await tester.tap(find.text('Freeze'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Reason'), 'Holiday');
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Unlimited is frozen from'), findsOneWidget);
+    await tester.tap(find.text('Send request'));
+    await tester.pumpAndSettle();
+    expect(find.text('Are you sure?'), findsNothing);
+    expect(api.membershipChanges, [('freeze', 1, 'Holiday')]);
+  });
 }
 
 class _WithSession extends ConsumerWidget {

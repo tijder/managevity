@@ -588,7 +588,7 @@ abstract class AppLocalizations {
   /// No description provided for @membershipReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'Changing, freezing or cancelling a membership is only possible in the official app or at the desk.'**
+  /// **'Freezing, cancelling and withdrawing are requests to your gym; it confirms them. Taking out or converting a membership goes through your gym.'**
   String get membershipReadOnly;
 
   /// No description provided for @addonOn.
@@ -1520,6 +1520,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next'**
   String get next;
+
+  /// No description provided for @membershipFreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze'**
+  String get membershipFreeze;
+
+  /// No description provided for @membershipCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel membership'**
+  String get membershipCancel;
+
+  /// No description provided for @membershipWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get membershipWithdraw;
+
+  /// No description provided for @membershipTerminated.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get membershipTerminated;
+
+  /// No description provided for @changeReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get changeReason;
+
+  /// No description provided for @changeReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a reason'**
+  String get changeReasonRequired;
+
+  /// No description provided for @changeFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get changeFrom;
+
+  /// No description provided for @changeUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until'**
+  String get changeUntil;
+
+  /// No description provided for @freezeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is frozen from {from} up to and including {until}.'**
+  String freezeConfirm(String name, String from, String until);
+
+  /// No description provided for @cancelConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'You cancel {name} as of {date}.'**
+  String cancelConfirm(String name, String date);
+
+  /// No description provided for @withdrawConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'You use your right of withdrawal for {name}: the membership is dissolved.'**
+  String withdrawConfirm(String name);
+
+  /// No description provided for @changeReasonLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String changeReasonLine(String reason);
+
+  /// No description provided for @changeIsRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a request to your gym, which confirms it.'**
+  String get changeIsRequest;
+
+  /// No description provided for @changeSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get changeSend;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

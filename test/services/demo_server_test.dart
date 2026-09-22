@@ -182,4 +182,23 @@ void main() {
     await api.confirmAddonChange(drink, on: true, from: today());
     expect((await api.addons(location)).firstWhere((a) => a.id == drink.id).on, isTrue);
   });
+
+  test('a membership can be frozen and cancelled, and then says so', () async {
+    final location = (await api.locations()).single.id;
+    var membership = (await api.memberships(location)).single;
+    expect((membership.allowFreeze, membership.allowCancel), (true, true));
+    await api.freezeMembership(
+      membership,
+      reason: 'Holiday',
+      from: today(),
+      until: today().add(const Duration(days: 14)),
+    );
+    membership = (await api.memberships(location)).single;
+    expect(membership.allowFreeze, isFalse);
+
+    final reason = (await api.cancellationReasons(location)).first;
+    await api.cancelMembership(membership, from: today(), reason: reason);
+    membership = (await api.memberships(location)).single;
+    expect((membership.terminated, membership.allowCancel), (true, false));
+  });
 }

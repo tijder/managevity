@@ -141,6 +141,9 @@ class DemoApi extends FakeSportivityApi {
       contractEndDate: DateTime(2027, 3, 1),
       unlimitedVisits: true,
       unlimitedReservations: true,
+      allowFreeze: true,
+      allowCancel: true,
+      canConvert: true,
     ),
   ];
 
