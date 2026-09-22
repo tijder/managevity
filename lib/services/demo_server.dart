@@ -29,6 +29,8 @@ class DemoServer implements HttpClientAdapter {
   final _liked = <int>{};
   String? _photoBase64;
   final _guests = <Map<String, Object?>>[];
+  var _language = 'en_GB';
+  var _optIn = <String, Object?>{'OptIn': true, 'OptInCalls': false, 'OptInWhatsapp': false};
   var _nextGuestId = 1;
   var _contact = <String, Object?>{
     'Address': 'Station Road',
@@ -152,6 +154,33 @@ class DemoServer implements HttpClientAdapter {
       },
       ('GET', 'TogetherEntrance/CheckMembership') => {'Response': 'Succes', 'Warning': false},
       ('POST', 'TogetherEntrance') => _guest(body),
+      ('POST', 'UserContent/Language') => () {
+        _language = '${body['Language']}';
+        return {'Response': 'Succes'};
+      }(),
+      ('GET', 'OptIn') => {'Response': 'Succes', ..._optIn},
+      ('POST', 'OptIn') => () {
+        _optIn = {
+          for (final key in ['OptIn', 'OptInCalls', 'OptInWhatsapp']) key: body[key] == true,
+        };
+        return {'Response': 'Succes'};
+      }(),
+      ('GET', 'UserContent/Countries') => {
+        'Response': 'Succes',
+        'Countries': [
+          {'Name': 'Belgium', 'AutomaticAdress': false},
+          {'Name': 'Germany', 'AutomaticAdress': false},
+          {'Name': 'Netherlands', 'AutomaticAdress': true},
+        ],
+      },
+      // Every postcode in the demo is on Station Road, Exampleton.
+      ('GET', 'UserContent/AdressValid') => {
+        'Response': 'Succes',
+        'Address': 'Station Road',
+        'Housenumber': int.tryParse(query['HouseNumber'] ?? ''),
+        'Zipcode': query['ZipCode'],
+        'City': 'Exampleton',
+      },
       _ => {'Response': 'Not available in the demo'},
     };
   }
@@ -309,6 +338,8 @@ class DemoServer implements HttpClientAdapter {
       'LastName': 'Example',
       'Email': 'robin@example.org',
       'Saldo': '€ 0.00',
+      'Country': 'Netherlands',
+      'Language': _language,
       ..._contact,
     },
   };

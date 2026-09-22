@@ -125,6 +125,8 @@ class DemoApi extends FakeSportivityApi {
       city: 'Exampleton',
       phoneMobile: '0600000000',
       balance: '€ 0.00',
+      country: 'Netherlands',
+      language: 'nl_NL',
     ),
   );
 

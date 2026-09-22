@@ -337,5 +337,42 @@
       }
     }
   },
-  "guestVisited": "Visited"
+  "guestVisited": "Visited",
+  "undo": "Undo",
+  "profileLookup": "Look up address",
+  "profileLookupNotFound": "No address found for this postcode and house number.",
+  "profileGymTitle": "Your gym and you",
+  "profileLanguage": "Language of messages from your gym",
+  "profileLanguageSaved": "The gym will write to you in {language}.",
+  "@profileLanguageSaved": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageName": "{code, select, nl_NL{Dutch} en_GB{English} other{{code}}}",
+  "@languageName": {
+    "description": "The name of a language code the gym uses.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "optInTitle": "Your gym may contact you by",
+  "optInEmail": "Email and newsletters",
+  "optInCalls": "Phone",
+  "optInWhatsapp": "WhatsApp",
+  "optInSaved": "Saved: {what} {state, select, on{on} other{off}}.",
+  "@optInSaved": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  }
 }

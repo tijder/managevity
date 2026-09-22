@@ -8,6 +8,7 @@ import '../models/heatmap.dart';
 import '../models/invoice.dart';
 import '../models/membership.dart';
 import '../models/news_item.dart';
+import '../models/profile_settings.dart';
 import 'services.dart';
 import 'session_provider.dart';
 
@@ -72,4 +73,12 @@ final guestPassesProvider = FutureProvider.autoDispose<List<GuestPass>>(
 
 final guestAllowanceProvider = FutureProvider.autoDispose<GuestAllowance>(
   (ref) => ref.watch(apiProvider).guestAllowance(ref.watch(locationIdProvider)),
+);
+
+final optInProvider = FutureProvider.autoDispose<OptInSettings>(
+  (ref) => ref.watch(apiProvider).optIn(ref.watch(locationIdProvider)),
+);
+
+final countriesProvider = FutureProvider.autoDispose<List<Country>>(
+  (ref) => ref.watch(apiProvider).countries(ref.watch(locationIdProvider)),
 );

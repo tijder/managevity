@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:managevity/models/guest_pass.dart';
+import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/services/demo_server.dart';
 import 'package:managevity/services/sportivity_api.dart';
@@ -150,6 +151,19 @@ void main() {
     await expectLater(
       api.addGuest(location, NewGuest(name: ' ', visitDate: today())),
       throwsA(isA<SportivityException>()),
+    );
+  });
+
+  test('profile: language, opt-in and address lookup', () async {
+    final location = (await api.locations()).single.id;
+    await api.setLanguage(location, 'nl_NL');
+    expect((await api.userContent()).customer.language, 'nl_NL');
+    await api.setOptIn(location, const OptInSettings(whatsapp: true));
+    expect((await api.optIn(location)).whatsapp, isTrue);
+    expect((await api.countries(location)).where((c) => c.automaticAddress), isNotEmpty);
+    expect(
+      (await api.lookupAddress(location, zipCode: '1234 AB', houseNumber: 1))?.city,
+      'Exampleton',
     );
   });
 }

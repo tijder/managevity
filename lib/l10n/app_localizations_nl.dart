@@ -686,4 +686,52 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get guestVisited => 'Geweest';
+
+  @override
+  String get undo => 'Ongedaan maken';
+
+  @override
+  String get profileLookup => 'Adres opzoeken';
+
+  @override
+  String get profileLookupNotFound => 'Geen adres gevonden bij deze postcode en dit huisnummer.';
+
+  @override
+  String get profileGymTitle => 'Jij en je sportschool';
+
+  @override
+  String get profileLanguage => 'Taal van berichten van je sportschool';
+
+  @override
+  String profileLanguageSaved(String language) {
+    return 'De sportschool schrijft je voortaan in het $language.';
+  }
+
+  @override
+  String languageName(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'nl_NL': 'Nederlands',
+      'en_GB': 'Engels',
+      'other': '$code',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get optInTitle => 'Je sportschool mag je benaderen via';
+
+  @override
+  String get optInEmail => 'E-mail en nieuwsbrieven';
+
+  @override
+  String get optInCalls => 'Telefoon';
+
+  @override
+  String get optInWhatsapp => 'WhatsApp';
+
+  @override
+  String optInSaved(String what, String state) {
+    String _temp0 = intl.Intl.selectLogic(state, {'on': 'aan', 'other': 'uit'});
+    return 'Opgeslagen: $what $_temp0.';
+  }
 }

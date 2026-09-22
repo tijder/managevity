@@ -686,4 +686,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guestVisited => 'Visited';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get profileLookup => 'Look up address';
+
+  @override
+  String get profileLookupNotFound => 'No address found for this postcode and house number.';
+
+  @override
+  String get profileGymTitle => 'Your gym and you';
+
+  @override
+  String get profileLanguage => 'Language of messages from your gym';
+
+  @override
+  String profileLanguageSaved(String language) {
+    return 'The gym will write to you in $language.';
+  }
+
+  @override
+  String languageName(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'nl_NL': 'Dutch',
+      'en_GB': 'English',
+      'other': '$code',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get optInTitle => 'Your gym may contact you by';
+
+  @override
+  String get optInEmail => 'Email and newsletters';
+
+  @override
+  String get optInCalls => 'Phone';
+
+  @override
+  String get optInWhatsapp => 'WhatsApp';
+
+  @override
+  String optInSaved(String what, String state) {
+    String _temp0 = intl.Intl.selectLogic(state, {'on': 'on', 'other': 'off'});
+    return 'Saved: $what $_temp0.';
+  }
 }

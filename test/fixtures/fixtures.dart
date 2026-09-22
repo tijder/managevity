@@ -6,6 +6,7 @@ import 'package:managevity/models/customer.dart';
 import 'package:managevity/models/guest_pass.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/location.dart';
+import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/models/sync_settings.dart';
 import 'package:managevity/services/cache_service.dart';
@@ -130,7 +131,7 @@ class FakeSportivityApi extends SportivityApi {
 
   @override
   Future<UserContent> userContent({int? locationId}) async => const UserContent(
-    customer: Customer(fullName: 'Test Person'),
+    customer: Customer(fullName: 'Test Person', country: 'Netherlands', language: 'nl_NL'),
     latitude: 52.1,
     longitude: 5.2,
   );
@@ -171,6 +172,38 @@ class FakeSportivityApi extends SportivityApi {
     guests.removeWhere((g) => g.id == guest.id);
     return 'Guest removed';
   }
+
+  var optInSettings = const OptInSettings(email: true);
+  final languages = <String>[];
+
+  @override
+  Future<OptInSettings> optIn(int locationId) async => optInSettings;
+
+  @override
+  Future<String?> setOptIn(int locationId, OptInSettings settings) async {
+    optInSettings = settings;
+    return 'Succes';
+  }
+
+  @override
+  Future<String?> setLanguage(int locationId, String language) async {
+    languages.add(language);
+    return 'Succes';
+  }
+
+  @override
+  Future<List<Country>> countries(int locationId) async => const [
+    Country(name: 'Netherlands', automaticAddress: true),
+  ];
+
+  @override
+  Future<AddressLookup?> lookupAddress(
+    int locationId, {
+    required String zipCode,
+    required int houseNumber,
+    String addition = '',
+  }) async =>
+      zipCode == '0000 XX' ? null : const AddressLookup(street: 'Station Road', city: 'Exampleton');
 
   @override
   Future<BookingResult> cancelLesson(int lessonId, int locationId) async {

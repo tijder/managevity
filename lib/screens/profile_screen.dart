@@ -7,6 +7,8 @@ import '../utils/errors.dart';
 import '../models/customer.dart';
 import '../providers/content_providers.dart';
 import '../providers/services.dart';
+import '../providers/session_provider.dart';
+import '../models/profile_settings.dart';
 import '../widgets/async_view.dart';
 import '../widgets/photo_editor.dart';
 import '../widgets/responsive.dart';
@@ -91,10 +93,48 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     }
   }
 
+  /// Street and city from the postcode and house number, as the gym's own app does.
+  Future<void> _lookup() async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final number = int.tryParse(_houseNumber.text.trim());
+    final zip = _zip.text.trim();
+    if (number == null || zip.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      final found = await ref
+          .read(apiProvider)
+          .lookupAddress(
+            ref.read(locationIdProvider),
+            zipCode: zip,
+            houseNumber: number,
+            addition: _addition.text.trim(),
+          );
+      if (found == null) {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.profileLookupNotFound)));
+      } else {
+        _address.text = found.street;
+        _city.text = found.city;
+        if (found.zipCode case final zip? when zip.isNotEmpty) _zip.text = zip;
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final c = widget.customer;
+    // Only where the gym can look addresses up for the customer's country.
+    final canLookUp =
+        ref
+            .watch(countriesProvider)
+            .value
+            ?.any((country) => country.name == c.country && country.automaticAddress) ??
+        false;
     Widget field(TextEditingController controller, String label, {TextInputType? type}) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
@@ -159,11 +199,141 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           ],
         ),
         field(_zip, l10n.profileZip),
+        if (canLookUp)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextButton.icon(
+                onPressed: _busy ? null : _lookup,
+                icon: const Icon(Icons.search),
+                label: Text(l10n.profileLookup),
+              ),
+            ),
+          ),
         field(_city, l10n.profileCity),
         field(_phone, l10n.profilePhone, type: TextInputType.phone),
         field(_mobile, l10n.profileMobile, type: TextInputType.phone),
         FilledButton(onPressed: _busy ? null : _save, child: Text(l10n.save)),
+        SectionTitle(l10n.profileGymTitle),
+        _GymSettings(language: c.language),
       ],
+    );
+  }
+}
+
+/// The language the gym writes in, and which channels it may use. Both are harmless and
+/// easy to change back, so they apply at once, with "Undo" in the snackbar.
+class _GymSettings extends ConsumerStatefulWidget {
+  const _GymSettings({required this.language});
+
+  final String? language;
+
+  @override
+  ConsumerState<_GymSettings> createState() => _GymSettingsState();
+}
+
+class _GymSettingsState extends ConsumerState<_GymSettings> {
+  late String? _language = widget.language;
+  OptInSettings? _optIn;
+  bool _busy = false;
+
+  Future<void> _setLanguage(String code) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final before = _language;
+    setState(() {
+      _language = code;
+      _busy = true;
+    });
+    try {
+      await ref.read(apiProvider).setLanguage(ref.read(locationIdProvider), code);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.profileLanguageSaved(l10n.languageName(code))),
+          action: before == null
+              ? null
+              : SnackBarAction(label: l10n.undo, onPressed: () => _setLanguage(before)),
+        ),
+      );
+    } catch (e) {
+      if (mounted) setState(() => _language = before);
+      messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _setOptIn(OptInSettings before, OptInSettings after, String what, bool on) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() {
+      _optIn = after;
+      _busy = true;
+    });
+    try {
+      await ref.read(apiProvider).setOptIn(ref.read(locationIdProvider), after);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.optInSaved(what, on ? 'on' : 'off')),
+          action: SnackBarAction(
+            label: l10n.undo,
+            onPressed: () => _setOptIn(after, before, what, !on),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) setState(() => _optIn = before);
+      messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final optIn = _optIn ?? ref.watch(optInProvider).value;
+    final languages = [...gymLanguages, ?(gymLanguages.contains(_language) ? null : _language)];
+
+    Widget toggle(String label, bool value, OptInSettings Function(bool) change) => SwitchListTile(
+      title: Text(label),
+      value: value,
+      onChanged: _busy || optIn == null ? null : (on) => _setOptIn(optIn, change(on), label, on),
+    );
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: DropdownButtonFormField<String>(
+              initialValue: _language,
+              decoration: InputDecoration(labelText: l10n.profileLanguage),
+              items: [
+                for (final code in languages)
+                  DropdownMenuItem(value: code, child: Text(l10n.languageName(code))),
+              ],
+              onChanged: _busy
+                  ? null
+                  : (code) {
+                      if (code != null && code != _language) _setLanguage(code);
+                    },
+            ),
+          ),
+          if (optIn != null) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Text(l10n.optInTitle, style: Theme.of(context).textTheme.labelLarge),
+            ),
+            toggle(l10n.optInEmail, optIn.email, (on) => optIn.copyWith(email: on)),
+            toggle(l10n.optInCalls, optIn.calls, (on) => optIn.copyWith(calls: on)),
+            toggle(l10n.optInWhatsapp, optIn.whatsapp, (on) => optIn.copyWith(whatsapp: on)),
+          ],
+        ],
+      ),
     );
   }
 }

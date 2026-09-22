@@ -1328,6 +1328,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Visited'**
   String get guestVisited;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @profileLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up address'**
+  String get profileLookup;
+
+  /// No description provided for @profileLookupNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No address found for this postcode and house number.'**
+  String get profileLookupNotFound;
+
+  /// No description provided for @profileGymTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your gym and you'**
+  String get profileGymTitle;
+
+  /// No description provided for @profileLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language of messages from your gym'**
+  String get profileLanguage;
+
+  /// No description provided for @profileLanguageSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The gym will write to you in {language}.'**
+  String profileLanguageSaved(String language);
+
+  /// The name of a language code the gym uses.
+  ///
+  /// In en, this message translates to:
+  /// **'{code, select, nl_NL{Dutch} en_GB{English} other{{code}}}'**
+  String languageName(String code);
+
+  /// No description provided for @optInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your gym may contact you by'**
+  String get optInTitle;
+
+  /// No description provided for @optInEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and newsletters'**
+  String get optInEmail;
+
+  /// No description provided for @optInCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get optInCalls;
+
+  /// No description provided for @optInWhatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get optInWhatsapp;
+
+  /// No description provided for @optInSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved: {what} {state, select, on{on} other{off}}.'**
+  String optInSaved(String what, String state);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

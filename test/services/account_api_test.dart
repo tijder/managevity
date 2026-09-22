@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:managevity/models/guest_pass.dart';
+import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/services/sportivity_api.dart';
 import 'package:managevity/utils/errors.dart';
@@ -72,6 +73,46 @@ void main() {
       final allowance = await client.guestAllowance(7);
       expect(allowance.allowed, isFalse);
       expect(allowance.message, 'Geen actief duo abonnement.');
+    });
+  });
+
+  group('profile', () {
+    test('opt-in: all three flags go along, so one switch does not reset the others', () async {
+      final client = api((_, _) => json({'Response': 'Succes'}));
+      await client.setOptIn(7, const OptInSettings(email: true, whatsapp: true));
+      expect(sent.single.$2, {
+        'OptIn': true,
+        'LocationId': 7,
+        'OptInCalls': false,
+        'OptInWhatsapp': true,
+      });
+    });
+
+    test('address lookup: found, and not found', () async {
+      var found = true;
+      final client = api(
+        (o, _) => json({
+          'Response': 'Succes',
+          'Address': found ? 'Station Road' : null,
+          'City': found ? 'Exampleton' : null,
+          'Zipcode': o.queryParameters['ZipCode'],
+        }),
+      );
+      final hit = await client.lookupAddress(7, zipCode: '1234 AB', houseNumber: 12);
+      expect((hit?.street, hit?.city), ('Station Road', 'Exampleton'));
+      expect(sent.single.$1.queryParameters, {
+        'LocationId': 7,
+        'ZipCode': '1234 AB',
+        'HouseNumber': 12,
+      });
+      found = false;
+      expect(await client.lookupAddress(7, zipCode: '0000 XX', houseNumber: 1), isNull);
+    });
+
+    test('language goes as the locale code', () async {
+      final client = api((_, _) => json({'Response': 'Succes'}));
+      await client.setLanguage(7, 'en_GB');
+      expect(sent.single.$2, {'LocationId': 7, 'Language': 'en_GB'});
     });
   });
 }

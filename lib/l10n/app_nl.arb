@@ -205,5 +205,17 @@
   "guestAddConfirm": "{name} wordt aangemeld als je gast op {date}.",
   "guestRemove": "Verwijderen",
   "guestRemoveConfirm": "{name} verwijderen uit je gasten?",
-  "guestVisited": "Geweest"
+  "guestVisited": "Geweest",
+  "undo": "Ongedaan maken",
+  "profileLookup": "Adres opzoeken",
+  "profileLookupNotFound": "Geen adres gevonden bij deze postcode en dit huisnummer.",
+  "profileGymTitle": "Jij en je sportschool",
+  "profileLanguage": "Taal van berichten van je sportschool",
+  "profileLanguageSaved": "De sportschool schrijft je voortaan in het {language}.",
+  "languageName": "{code, select, nl_NL{Nederlands} en_GB{Engels} other{{code}}}",
+  "optInTitle": "Je sportschool mag je benaderen via",
+  "optInEmail": "E-mail en nieuwsbrieven",
+  "optInCalls": "Telefoon",
+  "optInWhatsapp": "WhatsApp",
+  "optInSaved": "Opgeslagen: {what} {state, select, on{aan} other{uit}}."
 }

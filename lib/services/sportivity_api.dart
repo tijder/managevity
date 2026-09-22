@@ -11,6 +11,7 @@ import '../models/lesson.dart';
 import '../models/location.dart';
 import '../models/membership.dart';
 import '../models/news_item.dart';
+import '../models/profile_settings.dart';
 import '../models/session.dart';
 import '../utils/errors.dart';
 import '../utils/json.dart';
@@ -171,8 +172,41 @@ class SportivityApi {
   Future<void> setContactDetails(ContactDetails details) =>
       _send('POST', 'UserContent/SetUserContent', data: details.toJson());
 
-  Future<void> setLanguage(int locationId, String language) =>
-      _send('POST', 'UserContent/Language', data: {'LocationId': locationId, 'Language': language});
+  /// The language the gym writes to you in, as a locale code (`nl_NL`).
+  Future<String?> setLanguage(int locationId, String language) async => _outcome(
+    await _send(
+      'POST',
+      'UserContent/Language',
+      data: {'LocationId': locationId, 'Language': language},
+    ),
+  );
+
+  Future<OptInSettings> optIn(int locationId) async =>
+      OptInSettings.fromJson(await _get('OptIn', {'LocationId': locationId}));
+
+  Future<String?> setOptIn(int locationId, OptInSettings settings) async =>
+      _outcome(await _send('POST', 'OptIn', data: settings.toJson(locationId)));
+
+  Future<List<Country>> countries(int locationId) async => _items(
+    await _get('UserContent/Countries', {'LocationId': locationId}),
+    'Countries',
+    Country.tryFromJson,
+  );
+
+  /// Street and city for a postcode and house number; null if the server knows none.
+  Future<AddressLookup?> lookupAddress(
+    int locationId, {
+    required String zipCode,
+    required int houseNumber,
+    String addition = '',
+  }) async => AddressLookup.tryFromJson(
+    await _get('UserContent/AdressValid', {
+      'LocationId': locationId,
+      'ZipCode': zipCode,
+      'HouseNumber': houseNumber,
+      if (addition.isNotEmpty) 'Addition': addition,
+    }),
+  );
 
   Future<Uint8List?> customerPhoto(int locationId) async {
     final body = await _get('CustomerPhoto', {'LocationId': locationId});
