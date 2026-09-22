@@ -105,6 +105,37 @@ void main() {
       expect(adapter.requests, hasLength(2));
     });
 
+    test('requests refused at the same time share one renewal', () async {
+      var renewals = 0;
+      final (api, adapter) = build(
+        (o, _) => o.headers['Authorization'] == 'new'
+            ? json({'Response': 'OK', 'Newss': []})
+            : json({'Response': 'Wrong token'}),
+      );
+      api.session = const Session(token: 'old');
+      api.onSessionExpired = () async {
+        renewals++;
+        // Like the real login: no session while it runs.
+        api.session = null;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return api.session = const Session(token: 'new');
+      };
+
+      await Future.wait([api.news(7), api.notifications(7), api.news(7)]);
+      expect(renewals, 1);
+      expect(adapter.requests, hasLength(6));
+
+      // A request that starts while a renewal runs waits for it instead of failing.
+      api.session = const Session(token: 'old');
+      final refused = api.news(7);
+      while (renewals < 2) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(api.session, isNull);
+      await Future.wait([refused, api.notifications(7)]);
+      expect(renewals, 2);
+    });
+
     test('if renewing fails: a 401 and no endless loop', () async {
       final (api, adapter) = build((_, _) => json({'Response': 'Wrong token'}));
       api.session = const Session(token: 'old');

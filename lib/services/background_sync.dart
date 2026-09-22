@@ -33,9 +33,13 @@ void backgroundSyncDispatcher() {
       if (!settings.enabled) return true;
       final session = await container.read(sessionProvider.future);
       if (!session.ready) return true;
-      // Fetches and syncs; throws on a network error, so that we never sync against an
+      // Straight through the fetcher, not the notifier: reading the notifier runs its build,
+      // which fetches as well. Throws on a network error, so that we never sync against an
       // empty list.
-      await container.read(bookedLessonsProvider.notifier).refreshAndSync();
+      final lessons = await container
+          .read(bookedLessonsFetcherProvider)
+          .fetch(session.location!.id);
+      await container.read(syncProvider.notifier).run(lessons);
       return true;
     } on Exception catch (e) {
       debugPrint('[BackgroundSync] $e');

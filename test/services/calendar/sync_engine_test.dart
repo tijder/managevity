@@ -34,6 +34,18 @@ class FakeCalendarTarget implements CalendarSyncTarget {
   }
 }
 
+class _Stopped extends Error {}
+
+class _StoppedAfterFirst extends FakeCalendarTarget {
+  var _writes = 0;
+
+  @override
+  Future<WrittenEvent> upsert(String calendarId, CalendarEvent event, {WrittenEvent? existing}) {
+    if (_writes++ > 0) throw _Stopped();
+    return super.upsert(calendarId, event, existing: existing);
+  }
+}
+
 CalendarEvent lesson(int id, DateTime start, {String title = 'Yoga', bool tentative = false}) =>
     CalendarEvent(
       uid: lessonUid(id),
@@ -131,6 +143,23 @@ void main() {
     final second = await run({1: lesson(1, tomorrow), 2: lesson(2, tomorrow)});
     expect((second.created, second.unchanged), (1, 1));
   });
+
+  test(
+    'the index is saved after every write, so a sync cut off halfway leaves no orphans',
+    () async {
+      // The second write never returns: the operating system stopped the background task.
+      final stopped = _StoppedAfterFirst();
+      engine = SyncEngine(target: stopped, store: store, clock: () => now);
+      expect(() => run({1: lesson(1, tomorrow), 2: lesson(2, tomorrow)}), throwsA(isA<_Stopped>()));
+      await pumpEventQueue();
+      expect((await store.load('cal')).keys, [1]);
+
+      // The next run knows lesson 1 and only writes lesson 2.
+      engine = SyncEngine(target: target, store: store, clock: () => now);
+      final result = await run({1: lesson(1, tomorrow), 2: lesson(2, tomorrow)});
+      expect((result.created, result.unchanged), (1, 1));
+    },
+  );
 
   test('the index is per calendar: another calendar starts empty', () async {
     await run({1: lesson(1, tomorrow)});

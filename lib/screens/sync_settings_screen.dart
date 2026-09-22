@@ -98,8 +98,9 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   Future<void> _syncNow() => _guard(() async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    final booked = await ref.read(bookedLessonsProvider.future);
-    final result = await ref.read(syncProvider.notifier).run(booked);
+    // Fetched fresh, never the offline copy: the calendar only follows a list that the
+    // server has just confirmed.
+    final result = await ref.read(bookedLessonsProvider.notifier).refreshAndSync();
     if (result != null) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.syncResult(result.created, result.updated, result.deleted))),

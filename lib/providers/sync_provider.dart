@@ -122,26 +122,77 @@ String _describeFailure(SyncFailure failure) {
 }
 
 class SyncNotifier extends AsyncNotifier<SyncSettings> {
-  bool _running = false;
+  /// The sync loop in progress, if any; see [run].
+  Future<SyncResult?>? _loop;
+
+  /// A newer list that arrived while a sync was running: synced right after it.
+  List<Lesson>? _queued;
+
+  /// How long to wait, and how often, when the background task holds the lock.
+  @visibleForTesting
+  static Duration lockRetryDelay = const Duration(seconds: 10);
+  static const _lockRetries = 6;
 
   @override
   Future<SyncSettings> build() => ref.watch(settingsServiceProvider).getSync();
 
-  Future<void> _store(SyncSettings settings) async {
-    await ref.read(settingsServiceProvider).setSync(settings);
-    state = AsyncData(settings);
+  /// Completes when no sync is running (any more).
+  Future<void> get idle async {
+    while (_loop != null) {
+      await _loop;
+    }
   }
 
+  /// Applies [change] to the settings as they are *now* in storage, not as they were when a
+  /// sync started: the user may have changed the reminder meanwhile, and the background
+  /// task (another isolate) may have written a status.
+  Future<void> _update(SyncSettings Function(SyncSettings) change) async {
+    final service = ref.read(settingsServiceProvider);
+    final settings = change(await service.getSync());
+    await service.setSync(settings);
+    if (ref.mounted) state = AsyncData(settings);
+  }
+
+  /// Records the outcome of a sync, unless the target changed while it ran.
+  Future<void> _record(SyncSettings ranWith, SyncSettings Function(SyncSettings) change) =>
+      _update((now) => now.scope == ranWith.scope ? change(now) : now);
+
   /// Writes [booked] to the chosen calendar. Does nothing when sync is switched off.
-  Future<SyncResult?> run(List<Lesson> booked) async {
+  ///
+  /// Never drops a list: one that arrives while a sync runs (a booking during the sync at
+  /// start-up) is synced right after it, and when the background task holds the lock this
+  /// waits for it rather than giving up. Returns the result of the last round; null when
+  /// the list was handed to a sync already running, or nothing was written.
+  Future<SyncResult?> run(List<Lesson> booked) {
+    if (_loop != null) {
+      _queued = booked;
+      return Future.value();
+    }
+    // Mind the braces: see the whenComplete pitfall in CLAUDE.md.
+    return _loop = _drain(booked).whenComplete(() {
+      _loop = null;
+    });
+  }
+
+  Future<SyncResult?> _drain(List<Lesson> booked) async {
+    SyncResult? result;
+    for (List<Lesson>? next = booked; next != null; next = _queued) {
+      _queued = null;
+      result = await _runOnce(next);
+    }
+    return result;
+  }
+
+  Future<SyncResult?> _runOnce(List<Lesson> booked) async {
     final settings = await future;
-    final scope = settings.scope;
-    if (scope == null || _running) return null;
-    _running = true;
+    if (settings.scope == null) return null;
     try {
       final target = await ref.read(syncTargetFactoryProvider)(settings.kind);
       if (target == null) {
-        await _store(settings.copyWith(lastError: _eventL10n().errorCalendarUnavailable));
+        await _record(
+          settings,
+          (s) => s.copyWith(lastError: _eventL10n().errorCalendarUnavailable),
+        );
         return null;
       }
       final now = DateTime.now();
@@ -151,29 +202,31 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
           ? null
           : Duration(minutes: settings.reminderMinutes!);
       final engine = SyncEngine(target: target, store: ref.read(syncIndexStoreProvider));
-      // Across isolates: the background task and the app must not write at the same time.
-      final result = await ref.read(syncLockProvider)(
-        () => engine.sync(
-          calendarId: settings.calendarId!,
-          booked: {
-            for (final l in booked) l.id: eventForLesson(l, venue: venue, reminder: reminder),
-          },
-          windowStart: DateTime(now.year, now.month, now.day).toUtc(),
-        ),
+      Future<SyncResult> sync() => engine.sync(
+        calendarId: settings.calendarId!,
+        booked: {for (final l in booked) l.id: eventForLesson(l, venue: venue, reminder: reminder)},
+        windowStart: DateTime(now.year, now.month, now.day).toUtc(),
       );
-      // null: another isolate is already syncing; it will update the status.
+      // Across isolates: the background task and the app must not write at the same time.
+      // null: the other one is busy. Its list may predate a booking made here, so wait for
+      // it and then write ours.
+      final lock = ref.read(syncLockProvider);
+      var result = await lock(sync);
+      for (var i = 0; result == null && i < _lockRetries && ref.mounted; i++) {
+        await Future<void>.delayed(lockRetryDelay);
+        result = await lock(sync);
+      }
       if (result == null) return null;
-      await _store(
-        result.ok
-            ? settings.copyWith(lastRun: now, clearError: true)
-            : settings.copyWith(lastRun: now, lastError: _describeFailure(result.errors.first)),
+      await _record(
+        settings,
+        (s) => result!.ok
+            ? s.copyWith(lastRun: now, clearError: true)
+            : s.copyWith(lastRun: now, lastError: _describeFailure(result.errors.first)),
       );
       return result;
     } on Exception catch (e) {
-      await _store(settings.copyWith(lastError: describeError(_eventL10n(), e)));
+      await _record(settings, (s) => s.copyWith(lastError: describeError(_eventL10n(), e)));
       return null;
-    } finally {
-      _running = false;
     }
   }
 
@@ -188,8 +241,8 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
         await ref.read(syncLockProvider)(() => engine.removeAll(old.calendarId!));
       }
     }
-    await _store(
-      SyncSettings(
+    await _update(
+      (_) => SyncSettings(
         kind: calendar == null ? SyncTargetKind.off : kind,
         calendarId: calendar?.id,
         calendarName: calendar?.name,
@@ -198,10 +251,8 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
   }
 
   /// The events are updated at the next sync: the reminder is part of the hash.
-  Future<void> setReminder(int? minutes) async {
-    final settings = await future;
-    await _store(settings.copyWith(reminderMinutes: minutes, clearReminder: minutes == null));
-  }
+  Future<void> setReminder(int? minutes) =>
+      _update((s) => s.copyWith(reminderMinutes: minutes, clearReminder: minutes == null));
 
   Future<List<CalendarInfo>> listCalendars(SyncTargetKind kind) async {
     final target = await ref.read(syncTargetFactoryProvider)(kind);

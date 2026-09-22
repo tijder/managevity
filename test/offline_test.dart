@@ -20,8 +20,11 @@ class _UnpluggableApi extends FakeSportivityApi {
 
   var online = true;
 
+  /// What the server says instead of answering; by default "no connection".
+  SportivityException failure = const SportivityException(AppError.network);
+
   void _check() {
-    if (!online) throw const SportivityException(AppError.network);
+    if (!online) throw failure;
   }
 
   @override
@@ -164,4 +167,64 @@ void main() {
       expect(message.length, greaterThan('Yoga: '.length + 10));
     },
   );
+
+  test('a server error is an error, not "offline" with the saved copy', () async {
+    final api = _UnpluggableApi(lessons: [lessonFixture(id: 1, start: tomorrow)]);
+    final (first, cache) = build(api);
+    await first.read(sessionProvider.future);
+    final day = dayOf(tomorrow);
+    await first.read(scheduleWeekProvider(weekOf(day)).future);
+
+    for (final failure in const [
+      SportivityException(AppError.server, statusCode: 500),
+      SportivityException(AppError.notLoggedIn, statusCode: 401),
+    ]) {
+      api
+        ..online = false
+        ..failure = failure;
+      final (second, _) = build(api, cache: cache);
+      await second.read(sessionProvider.future);
+      final provider = scheduleWeekProvider(weekOf(day));
+      second.listen(provider, (_, _) {});
+      await expectLater(second.read(provider.future), throwsA(same(failure)));
+      await settle();
+      expect(second.read(offlineProvider), isFalse);
+    }
+  });
+
+  test('a gateway error from the proxy (web) does count as offline', () async {
+    final api = _UnpluggableApi(
+      lessons: [lessonFixture(id: 5, start: tomorrow, status: 'Booked')],
+    );
+    final (first, cache) = build(api);
+    await first.read(sessionProvider.future);
+    await first.read(bookedLessonsProvider.future);
+
+    api
+      ..online = false
+      ..failure = const SportivityException(AppError.server, statusCode: 502);
+    final (second, _) = build(api, cache: cache);
+    await second.read(sessionProvider.future);
+    expect((await second.read(bookedLessonsProvider.future)).single.id, 5);
+    await settle();
+    expect(second.read(offlineProvider), isTrue);
+  });
+
+  test('history: offline shows what was loaded before', () async {
+    final past = today.subtract(const Duration(days: 3, hours: -19));
+    final api = _UnpluggableApi(
+      lessons: [lessonFixture(id: 8, start: past, status: 'Booked')],
+    );
+    final (first, cache) = build(api);
+    await first.read(sessionProvider.future);
+    expect((await first.read(lessonHistoryProvider.future)).single.id, 8);
+
+    api.online = false;
+    final (second, _) = build(api, cache: cache);
+    await second.read(sessionProvider.future);
+    second.listen(lessonHistoryProvider, (_, _) {});
+    expect((await second.read(lessonHistoryProvider.future)).single.id, 8);
+    await settle();
+    expect(second.read(offlineProvider), isTrue);
+  });
 }

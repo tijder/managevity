@@ -1,18 +1,25 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/lesson.dart';
 import '../services/cache_service.dart';
+import '../services/calendar/sync_engine.dart';
 import '../services/sportivity_api.dart';
 import 'services.dart';
 import 'session_provider.dart';
 import 'sync_provider.dart';
 
-/// How far ahead booked lessons are fetched and synchronised.
-const kBookedWindow = Duration(days: 56);
+/// How many days ahead booked lessons are fetched and synchronised.
+const kBookedDays = 56;
 
 DateTime dayOf(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// [days] calendar days after [d], at midnight. Not `d.add(Duration(days: …))`: that adds
+/// 24-hour blocks, and across the end of summer time midnight plus 24 hours is still the
+/// same day (23:00) — the API then gets StartDate == EndDate.
+DateTime addDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
 
 /// True while a list on screen came from the cache because the server could not be reached.
 /// Reported from inside provider builds, hence the microtask: Riverpod does not allow one
@@ -36,31 +43,52 @@ DateTime weekOf(DateTime day) => DateTime(day.year, day.month, day.day - (day.we
 /// The schedule of a whole week in a single call, kept as stock: days that are in here cost
 /// no further request and no waiting. Stays around for ten minutes after the last screen
 /// looked at it; refreshing fetches it again.
+/// Fetches through [fetch] and keeps a copy under [key]; when the server cannot be reached,
+/// returns that copy and raises the offline notice. Only then: a refused token or a server
+/// error stays an error, otherwise it would pass for "offline" with stale data.
+Future<List<Lesson>> _fetchOrCached(
+  Ref ref,
+  String key,
+  Future<List<Lesson>> Function() fetch, {
+  List<Lesson> Function(List<Lesson>) select = _all,
+}) async {
+  final cache = ref.read(cacheServiceProvider);
+  try {
+    final lessons = await fetch();
+    await cache.saveLessons(key, lessons);
+    ref.read(offlineProvider.notifier).report(offline: false);
+    return select(lessons);
+  } on SportivityException catch (e) {
+    if (!e.isUnreachable) rethrow;
+    final cached = select(await cache.loadLessons(key));
+    if (cached.isEmpty) rethrow;
+    ref.read(offlineProvider.notifier).report(offline: true);
+    return cached;
+  }
+}
+
+List<Lesson> _all(List<Lesson> lessons) => lessons;
+
+String _weekKey(int locationId, DateTime monday) =>
+    'schedule:$locationId:${monday.toIso8601String().substring(0, 10)}';
+
 final scheduleWeekProvider = FutureProvider.autoDispose.family<List<Lesson>, DateTime>((
   ref,
   monday,
 ) async {
   final api = ref.watch(apiProvider);
-  final cache = ref.watch(cacheServiceProvider);
+  ref.watch(cacheServiceProvider);
   final locationId = ref.watch(locationIdProvider);
 
   final link = ref.keepAlive();
   final timer = Timer(const Duration(minutes: 10), link.close);
   ref.onDispose(timer.cancel);
 
-  final key = 'schedule:$locationId:${monday.toIso8601String().substring(0, 10)}';
-  try {
-    final lessons = await api.schedule(locationId, monday, monday.add(const Duration(days: 7)));
-    await cache.saveLessons(key, lessons);
-    ref.read(offlineProvider.notifier).report(offline: false);
-    return lessons;
-  } on SportivityException {
-    // No connection: whatever was there last time.
-    final cached = await cache.loadLessons(key);
-    if (cached.isEmpty) rethrow;
-    ref.read(offlineProvider.notifier).report(offline: true);
-    return cached;
-  }
+  return _fetchOrCached(
+    ref,
+    _weekKey(locationId, monday),
+    () => api.schedule(locationId, monday, addDays(monday, 7)),
+  );
 });
 
 /// The schedule of a single day.
@@ -92,15 +120,17 @@ final scheduleProvider = FutureProvider.autoDispose.family<List<Lesson>, DateTim
 
   final List<Lesson> lessons;
   try {
-    lessons = ofDay(await api.schedule(locationId, day, day.add(const Duration(days: 1))));
+    lessons = ofDay(await api.schedule(locationId, day, addDays(day, 1)));
     ref.read(offlineProvider.notifier).report(offline: false);
-  } on SportivityException {
+  } on SportivityException catch (e) {
+    if (!e.isUnreachable) rethrow;
     // No connection: the week that was saved last time still has this day in it. Straight
     // from the cache rather than through the week provider: that one would fail too, and an
     // auto-dispose provider that fails while nobody listens surfaces as a vague "disposed
     // during loading" instead of "no connection".
-    final key = 'schedule:$locationId:${monday.toIso8601String().substring(0, 10)}';
-    final cached = ofDay(await ref.read(cacheServiceProvider).loadLessons(key));
+    final cached = ofDay(
+      await ref.read(cacheServiceProvider).loadLessons(_weekKey(locationId, monday)),
+    );
     if (cached.isEmpty) rethrow;
     ref.read(offlineProvider.notifier).report(offline: true);
     return cached;
@@ -118,31 +148,24 @@ Future<void> refreshSchedule(WidgetRef ref, DateTime day) async {
   await ref.read(scheduleProvider(day).future);
 }
 
-class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
-  @override
-  Future<List<Lesson>> build() async {
-    final locationId = ref.watch(locationIdProvider);
-    final cache = ref.watch(cacheServiceProvider);
-    final key = 'booked:$locationId';
-    try {
-      final lessons = await _fetch(locationId);
-      await cache.saveLessons(key, lessons);
-      ref.read(offlineProvider.notifier).report(offline: false);
-      return lessons;
-    } on SportivityException {
-      final cached = await cache.loadLessons(key);
-      if (cached.isEmpty) rethrow;
-      ref.read(offlineProvider.notifier).report(offline: true);
-      return cached;
-    }
-  }
+/// Fetches the booked lessons, with details, and keeps a copy for offline use. Separate from
+/// [BookedLessonsNotifier] so that the background task can fetch and sync without first
+/// running the notifier's build — which fetches too, and would double every call.
+class BookedLessonsFetcher {
+  BookedLessonsFetcher(this._api, this._cache);
 
-  Future<List<Lesson>> _fetch(int locationId) async {
+  final SportivityApi _api;
+  final CacheService _cache;
+
+  static String cacheKey(int locationId) => 'booked:$locationId';
+
+  /// Fetches, stores and returns; throws if the list itself cannot be fetched.
+  Future<List<Lesson>> fetch(int locationId) async {
     final from = dayOf(DateTime.now());
-    final thin = await ref
-        .read(apiProvider)
-        .bookedLessons(locationId, from, from.add(kBookedWindow));
-    return _withDetails(thin);
+    final thin = await _api.bookedLessons(locationId, from, addDays(from, kBookedDays));
+    final lessons = await _withDetails(thin);
+    await _cache.saveLessons(cacheKey(locationId), lessons);
+    return lessons;
   }
 
   /// How long fetched lesson details stay valid. Trainer, room and description rarely
@@ -155,9 +178,7 @@ class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
   /// somebody else's server. Details are kept for a day and only fetched again when the
   /// lesson has been rescheduled. If fetching fails, the thin version stays.
   Future<List<Lesson>> _withDetails(List<Lesson> thin) async {
-    final api = ref.read(apiProvider);
-    final cache = ref.read(cacheServiceProvider);
-    final known = await cache.loadDetails();
+    final known = await _cache.loadDetails();
     final now = DateTime.now();
 
     bool fresh(Lesson lesson) {
@@ -176,7 +197,7 @@ class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
     for (var i = 0; i < missing.length; i += batch) {
       await Future.wait([
         for (final lesson in missing.skip(i).take(batch))
-          api
+          _api
               .lesson(lesson.id)
               .then<void>((full) => known[lesson.id] = (lesson: full, fetchedAt: now))
               .catchError((_) {}),
@@ -185,22 +206,51 @@ class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
     // Only keep what is still booked; the rest is of no use any more.
     final ids = {for (final l in thin) l.id};
     known.removeWhere((id, _) => !ids.contains(id));
-    await cache.saveDetails(known);
+    await _cache.saveDetails(known);
 
     return [
       for (final lesson in thin)
         known[lesson.id]?.lesson.copyWith(bookingStatus: lesson.bookingStatus) ?? lesson,
     ];
   }
+}
+
+final bookedLessonsFetcherProvider = Provider<BookedLessonsFetcher>(
+  (ref) => BookedLessonsFetcher(ref.watch(apiProvider), ref.watch(cacheServiceProvider)),
+);
+
+class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
+  @override
+  Future<List<Lesson>> build() async {
+    final locationId = ref.watch(locationIdProvider);
+    final fetcher = ref.watch(bookedLessonsFetcherProvider);
+    final cache = ref.watch(cacheServiceProvider);
+    try {
+      final lessons = await fetcher.fetch(locationId);
+      ref.read(offlineProvider.notifier).report(offline: false);
+      return lessons;
+    } on SportivityException catch (e) {
+      if (!e.isUnreachable) rethrow;
+      final cached = await cache.loadLessons(BookedLessonsFetcher.cacheKey(locationId));
+      if (cached.isEmpty) rethrow;
+      ref.read(offlineProvider.notifier).report(offline: true);
+      return cached;
+    }
+  }
+
+  Future<List<Lesson>> _refresh() async {
+    final lessons = await ref
+        .read(bookedLessonsFetcherProvider)
+        .fetch(ref.read(locationIdProvider));
+    state = AsyncData(lessons);
+    return lessons;
+  }
 
   /// Fetches again and then updates the calendar. Only after a successful fetch: an empty
   /// list caused by a network error must never empty the calendar.
-  Future<void> refreshAndSync() async {
-    final locationId = ref.read(locationIdProvider);
-    final lessons = await _fetch(locationId);
-    await ref.read(cacheServiceProvider).saveLessons('booked:$locationId', lessons);
-    state = AsyncData(lessons);
-    await ref.read(syncProvider.notifier).run(lessons);
+  Future<SyncResult?> refreshAndSync() async {
+    final lessons = await _refresh();
+    return ref.read(syncProvider.notifier).run(lessons);
   }
 
   Future<BookingResult> book(Lesson lesson, {bool buy = false}) async {
@@ -219,10 +269,18 @@ class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
     return result;
   }
 
+  /// The booking has gone through; nothing that follows may make it look as if it had not.
+  /// A failed refresh is logged and the list simply catches up at the next fetch. The
+  /// calendar is not waited for: the user gets their answer as soon as the list is fresh.
   Future<void> _afterChange(Lesson lesson) async {
     ref.invalidate(scheduleWeekProvider(weekOf(dayOf(lesson.start))));
     ref.invalidate(lessonProvider(lesson.id));
-    await refreshAndSync();
+    try {
+      final lessons = await _refresh();
+      unawaited(ref.read(syncProvider.notifier).run(lessons));
+    } on Exception catch (e) {
+      debugPrint('[booking] refresh after change failed: $e');
+    }
   }
 }
 
@@ -230,19 +288,22 @@ final bookedLessonsProvider = AsyncNotifierProvider<BookedLessonsNotifier, List<
   BookedLessonsNotifier.new,
 );
 
-/// How far back "History" looks.
-const kHistoryWindow = Duration(days: 365);
+/// How many days back "History" looks.
+const kHistoryDays = 365;
 
 /// Past lessons, newest first. Read-only: the calendar sync does not look at these.
 final lessonHistoryProvider = FutureProvider.autoDispose<List<Lesson>>((ref) async {
   final api = ref.watch(apiProvider);
+  ref.watch(cacheServiceProvider);
+  final locationId = ref.watch(locationIdProvider);
   final today = dayOf(DateTime.now());
-  final lessons = await api.bookedLessons(
-    ref.watch(locationIdProvider),
-    today.subtract(kHistoryWindow),
-    today,
+  return _fetchOrCached(
+    ref,
+    'history:$locationId',
+    () => api.bookedLessons(locationId, addDays(today, -kHistoryDays), today),
+    select: (lessons) =>
+        lessons.where((l) => l.isPast).toList()..sort((a, b) => b.startUtc.compareTo(a.startUtc)),
   );
-  return lessons.where((l) => l.isPast).toList()..sort((a, b) => b.startUtc.compareTo(a.startUtc));
 });
 
 /// The details of lessons that have taken place, stored permanently. The history list is

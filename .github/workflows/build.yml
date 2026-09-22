@@ -66,6 +66,10 @@ jobs:
 
       - name: Run tests
         run: flutter test --exclude-tags golden
+        env:
+          # A zone with summer time: date arithmetic that adds 24-hour blocks instead of
+          # calendar days only goes wrong there (see addDays).
+          TZ: Europe/Amsterdam
 
   linux:
     name: Build Linux

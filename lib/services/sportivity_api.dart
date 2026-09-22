@@ -34,6 +34,11 @@ class SportivityException implements Exception {
 
   bool get isUnauthorized => statusCode == 401 || statusCode == 403;
 
+  /// The server could not be reached: no connection, or (on web) the proxy saying the
+  /// server behind it did not answer. Only then is showing the cached copy "offline"; a
+  /// refused token or a server error is an error, not a reason to show stale data.
+  bool get isUnreachable => code == AppError.network || const {502, 503, 504}.contains(statusCode);
+
   /// For logs and tests. On screen use `describeError`, which knows the language.
   @override
   String toString() => 'SportivityException(${code.name}, $statusCode): ${serverMessage ?? ''}';
@@ -96,6 +101,19 @@ class SportivityApi {
   /// Called when the server rejects the token; yields a fresh session or null.
   /// The request is then repeated exactly once.
   Future<Session?> Function()? onSessionExpired;
+
+  /// The renewal in progress. Several requests that are refused at the same moment share
+  /// it, instead of each logging in again (and each trying every [AuthScheme]).
+  Future<Session?>? _renewing;
+
+  Future<Session?> _renew(Session? refused) {
+    // Refused with a token that has been replaced in the meantime: the new one is there.
+    if (_session != null && !identical(_session, refused)) return Future.value(_session);
+    // Mind the braces: see the whenComplete pitfall in CLAUDE.md.
+    return _renewing ??= (onSessionExpired?.call() ?? Future<Session?>.value()).whenComplete(() {
+      _renewing = null;
+    });
+  }
 
   // ── Login ─────────────────────────────────────────────────────────────────
 
@@ -378,9 +396,13 @@ class SportivityApi {
     bool authenticated = true,
     bool retried = false,
   }) async {
+    // While a renewal runs there is no session (login clears it); wait for the new one
+    // rather than failing with "not logged in".
+    if (authenticated && _renewing != null) await _renewing;
     if (authenticated && session == null) {
       throw const SportivityException(AppError.notLoggedIn, statusCode: 401);
     }
+    final sentWith = _session;
     final Response<Object?> response;
     try {
       response = await _dio.request<Object?>(
@@ -392,7 +414,7 @@ class SportivityApi {
         },
         options: Options(
           method: method,
-          headers: {if (authenticated) 'Authorization': session!.headerValue},
+          headers: {if (authenticated) 'Authorization': sentWith!.headerValue},
         ),
       );
     } on DioException {
@@ -408,7 +430,7 @@ class SportivityApi {
     if (authenticated && _isTokenRejected(body)) status = 401;
 
     if (authenticated && (status == 401 || status == 403) && !retried) {
-      final fresh = await onSessionExpired?.call();
+      final fresh = await _renew(sentWith);
       if (fresh != null) {
         session = fresh;
         return _send(method, path, query: query, data: data, retried: true);

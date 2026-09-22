@@ -127,6 +127,10 @@ class SyncEngine {
           startUtc: event.startUtc,
         );
         known == null ? created++ : updated++;
+        // Saved after every write, not only at the end: the operating system may stop the
+        // background task halfway, and an event the index does not know of would be created
+        // a second time in the device calendar (which has no fixed name to overwrite).
+        await store.save(calendarId, index);
       } on Exception catch (e) {
         errors.add(SyncFailure(error: e, lessonTitle: event.title));
       }
@@ -144,6 +148,7 @@ class SyncEngine {
         await target.delete(calendarId, entry.written);
         index.remove(entry.lessonId);
         deleted++;
+        await store.save(calendarId, index);
       } on Exception catch (e) {
         errors.add(SyncFailure(error: e));
       }
@@ -170,6 +175,7 @@ class SyncEngine {
         await target.delete(calendarId, entry.written);
         index.remove(entry.lessonId);
         deleted++;
+        await store.save(calendarId, index);
       } on Exception catch (e) {
         errors.add(SyncFailure(error: e));
       }

@@ -45,6 +45,7 @@ class FakeSportivityApi extends SportivityApi {
   /// How often the server was called; for tests that care about frugality.
   final scheduleCalls = <(DateTime, DateTime)>[];
   final lessonCalls = <int>[];
+  final bookedCalls = <(DateTime, DateTime)>[];
   final cancelled = <int>[];
 
   @override
@@ -69,18 +70,21 @@ class FakeSportivityApi extends SportivityApi {
 
   /// Like the real API: the list is thin (no trainer, room or description).
   @override
-  Future<List<Lesson>> bookedLessons(int locationId, DateTime from, DateTime to) async => [
-    for (final l in lessons)
-      if (l.bookingStatus.isMine && !l.start.isBefore(from) && l.start.isBefore(to))
-        Lesson(
-          id: l.id,
-          description: l.description,
-          startUtc: l.startUtc,
-          endUtc: l.endUtc,
-          bookingStatus: l.bookingStatus,
-          locationName: l.locationName,
-        ),
-  ];
+  Future<List<Lesson>> bookedLessons(int locationId, DateTime from, DateTime to) async {
+    bookedCalls.add((from, to));
+    return [
+      for (final l in lessons)
+        if (l.bookingStatus.isMine && !l.start.isBefore(from) && l.start.isBefore(to))
+          Lesson(
+            id: l.id,
+            description: l.description,
+            startUtc: l.startUtc,
+            endUtc: l.endUtc,
+            bookingStatus: l.bookingStatus,
+            locationName: l.locationName,
+          ),
+    ];
+  }
 
   // No photo by default: the avatar falls back to the initials, and no test touches the network.
   Uint8List? photo;

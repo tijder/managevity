@@ -35,7 +35,8 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
   - errors arrive as **HTTP 200** with the outcome in the body: `HttpStatusCode` for
     `Login`, `Response: "Wrong token"` for everything else. `_send` translates that into a
     `SportivityException` and, when a token is refused, tries to log in again once
-    (`onSessionExpired`);
+    (`onSessionExpired`). Requests refused at the same time share one renewal, and requests
+    that start during it wait for it;
   - the API sends **no CORS headers**, hence `API_BASE` (dart-define) and the proxy.
   Still open, marked with `TODO(probe)`: the form of `Authorization` (tried out while
   logging in), the date format of `StartDate`/`EndDate`, and the real values of
@@ -52,11 +53,18 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
   around a nullable one it drops out in a `??`.
 - **Calendar sync** (`services/calendar/`): `SyncEngine` compares the booked lessons with
   its own index (per target calendar) and does upsert/delete through a `CalendarSyncTarget`
-  (`CalDavTarget`, `DeviceCalendarTarget`). It only touches events that are in the index;
+  (`CalDavTarget`, `DeviceCalendarTarget`). It only touches events that are in the index,
+  and saves the index after every write (the OS may stop the background task halfway);
   lessons that are *in the past* stay where they are. It is only called after a successful
-  fetch — an empty list caused by a network error must never empty the calendar
-  (`BookedLessonsNotifier.refreshAndSync`). On Android it also runs every three hours via
-  workmanager (`services/background_sync.dart`).
+  fetch — an empty list caused by a network error, or the offline copy, must never reach the
+  calendar (`BookedLessonsNotifier.refreshAndSync`). On Android it also runs every three hours
+  via workmanager (`services/background_sync.dart`), which goes through
+  `BookedLessonsFetcher` directly: reading the notifier would run its build and fetch twice.
+  `SyncNotifier.run` never drops a list: one that arrives mid-sync is synced right after,
+  and a lock held by the other isolate is waited for. Status is written onto the settings
+  as they are in storage *now* (`_update`), not as they were when the sync started.
+- **Booking**: once `joinLesson` succeeds, nothing after it may throw — a failed refresh is
+  logged, and the calendar sync is not awaited.
 - **Storage** goes through `services/storage.dart` on **IsolatedHive**, never on plain Hive:
   the background sync is a second isolate that opens the same boxes. Every read and write is
   therefore async.
@@ -81,7 +89,12 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
   provider reports it to `offlineProvider` and `MainScreen` shows a strip ("Offline: showing
   what was loaded earlier"). A successful fetch clears it. Offline with nothing cached is an
   error ("no connection"), never an empty list. The report goes through a microtask because
-  Riverpod forbids changing one provider while another is being built.
+  Riverpod forbids changing one provider while another is being built. Only
+  `SportivityException.isUnreachable` (no connection, or 502/503/504 from the proxy) counts
+  as offline; a server error or a refused token stays an error.
+- **Dates**: a day further is `addDays` (calendar arithmetic), never
+  `.add(Duration(days: n))` — across the end of summer time that lands on 23:00 the same
+  day. CI runs the tests with `TZ=Europe/Amsterdam` for this reason.
 - **Every page has a URL** (path strategy on the web, nginx falls back to `index.html`, and
   `router.config(includePrefixMatches: true)` puts the main screen under a deep page so "back"
   works). `SessionGuard` remembers the requested URL in `pendingPathProvider` — taken from
