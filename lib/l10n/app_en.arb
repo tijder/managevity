@@ -118,8 +118,17 @@
       }
     }
   },
-  "lessonSpots": "{count, plural, =0{No spots} =1{1 spot} other{{count} spots}}",
-  "@lessonSpots": {
+  "lessonSpotsFree": "{count, plural, =0{No spots free} =1{1 spot free} other{{count} spots free}}",
+  "@lessonSpotsFree": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonGoing": "{count} going",
+  "@lessonGoing": {
+    "description": "How many people have booked the lesson.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -192,10 +201,11 @@
   "lessonWhen": "When",
   "lessonParticipants": "Participants",
   "lessonAbout": "About this lesson",
-  "lessonSpotsOfMax": "{spots} of {max} spots free",
-  "@lessonSpotsOfMax": {
+  "lessonGoingOfMax": "{count} of {max} going",
+  "@lessonGoingOfMax": {
+    "description": "How many people have booked the lesson, out of the maximum.",
     "placeholders": {
-      "spots": {
+      "count": {
         "type": "int"
       },
       "max": {

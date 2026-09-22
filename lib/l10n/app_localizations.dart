@@ -723,11 +723,17 @@ abstract class AppLocalizations {
   /// **'{created} new, {updated} updated, {deleted} removed'**
   String syncResult(int created, int updated, int deleted);
 
-  /// No description provided for @lessonSpots.
+  /// No description provided for @lessonSpotsFree.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{No spots} =1{1 spot} other{{count} spots}}'**
-  String lessonSpots(int count);
+  /// **'{count, plural, =0{No spots free} =1{1 spot free} other{{count} spots free}}'**
+  String lessonSpotsFree(int count);
+
+  /// How many people have booked the lesson.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} going'**
+  String lessonGoing(int count);
 
   /// No description provided for @lessonBuyAmount.
   ///
@@ -915,11 +921,11 @@ abstract class AppLocalizations {
   /// **'About this lesson'**
   String get lessonAbout;
 
-  /// No description provided for @lessonSpotsOfMax.
+  /// How many people have booked the lesson, out of the maximum.
   ///
   /// In en, this message translates to:
-  /// **'{spots} of {max} spots free'**
-  String lessonSpotsOfMax(int spots, int max);
+  /// **'{count} of {max} going'**
+  String lessonGoingOfMax(int count, int max);
 
   /// No description provided for @membershipPrice.
   ///

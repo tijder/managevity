@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:managevity/models/lesson.dart';
 import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/screens/schedule_screen.dart';
@@ -33,6 +34,30 @@ void main() {
     expect(find.text('Booked'), findsOneWidget);
     expect(find.text('Full'), findsOneWidget);
     expect(find.text('Not until tomorrow'), findsNothing);
+  });
+
+  testWidgets('a lesson nobody has booked yet shows all spots free, not "Full"', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [
+        // Straight from JSON, as the server sends it: SpotsInt is the number of people going.
+        for (final (id, going) in [(1, 0), (2, 18)])
+          Lesson.tryFromJson({
+            '_id': id,
+            'Description': 'Lesson $id',
+            'UTCStartTime': noon.toUtc().toIso8601String(),
+            'UTCEndTime': noon.add(const Duration(hours: 1)).toUtc().toIso8601String(),
+            'SpotsInt': going,
+            'MaximumParticipants': 24,
+            'Full': false,
+          })!,
+      ],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Full'), findsNothing);
+    expect(find.text('24 spots free'), findsOneWidget);
+    expect(find.text('6 spots free'), findsOneWidget);
   });
 
   testWidgets('filters by activity', (tester) async {

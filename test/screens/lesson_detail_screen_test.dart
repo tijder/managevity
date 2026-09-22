@@ -65,10 +65,13 @@ void main() {
       endUtc: tomorrow.add(const Duration(hours: 1)).toUtc(),
       bookingStatus: const BookingStatus(''),
       amount: '€ 7,50',
-      spotsLeft: 4,
+      participants: 4,
+      maximumParticipants: 10,
     );
     final api = _PaidLessonApi(lessons: [lesson]);
     await pump(tester, api);
+    // Both numbers, each saying what it counts.
+    expect(find.text('4 of 10 going · 6 spots free'), findsOneWidget);
 
     await tester.tap(find.text('Book'));
     await tester.pumpAndSettle();

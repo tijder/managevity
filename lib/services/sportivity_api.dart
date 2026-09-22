@@ -477,8 +477,8 @@ class SportivityApi {
   List<T> _items<T extends Object>(Json body, String key, T? Function(Json) parse) =>
       asList(body[key]).map(parse).nonNulls.toList();
 
-  /// TODO(probe): the date format of StartDate/EndDate/Date is not in the spec;
-  /// tool/probe.dart establishes which format actually returns lessons.
+  /// The date format of StartDate/EndDate/Date is not in the spec. The probe (22-09-2026)
+  /// got lessons with `yyyy-MM-dd` (and ISO 8601); `dd-MM-yyyy` and epoch millis gave 400.
   String _date(DateTime d) {
     String p(int v) => v.toString().padLeft(2, '0');
     return '${d.year}-${p(d.month)}-${p(d.day)}';

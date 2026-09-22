@@ -17,7 +17,10 @@ Lesson lessonFixture({
   String description = 'Yoga',
   required DateTime start,
   String? status,
+
+  /// Spots free, out of [max]; the API itself sends the number of people going.
   int? spots = 5,
+  int max = 10,
   String? activity = 'Yoga',
   String? trainer = 'Anna',
   bool canUseWaitingList = false,
@@ -30,7 +33,8 @@ Lesson lessonFixture({
   activity: activity,
   trainer: trainer,
   room: 'Room 1',
-  spotsLeft: spots,
+  participants: spots == null ? null : max - spots,
+  maximumParticipants: spots == null ? null : max,
   full: spots == 0,
   canUseWaitingList: canUseWaitingList,
 );

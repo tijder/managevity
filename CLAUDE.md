@@ -29,18 +29,21 @@ the CI job `test` fails when they are out of date.
 
 Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`.
 
-- **`services/sportivity_api.dart`** — the only place that knows the API. Three things that
-  are not in the Swagger spec and were established here (21-09-2026):
+- **`services/sportivity_api.dart`** — the only place that knows the API. Things that
+  are not in the Swagger spec and were established here (21/22-09-2026):
   - without `Accept: application/json` the server answers in **XML**;
   - errors arrive as **HTTP 200** with the outcome in the body: `HttpStatusCode` for
     `Login`, `Response: "Wrong token"` for everything else. `_send` translates that into a
     `SportivityException` and, when a token is refused, tries to log in again once
     (`onSessionExpired`). Requests refused at the same time share one renewal, and requests
     that start during it wait for it;
-  - the API sends **no CORS headers**, hence `API_BASE` (dart-define) and the proxy.
+  - the API sends **no CORS headers**, hence `API_BASE` (dart-define) and the proxy;
+  - `SpotsInt` is the number of people **going**, not the spots free (22-09-2026, 231
+    lessons: `Full` exactly when it equals `MaximumParticipants`). `Lesson.participants`
+    holds it, `spotsLeft`/`isFull` are derived. Dates go as `yyyy-MM-dd`.
   Still open, marked with `TODO(probe)`: the form of `Authorization` (tried out while
-  logging in), the date format of `StartDate`/`EndDate`, and the real values of
-  `BookingStatus` (`models/lesson.dart` currently interprets them by keyword).
+  logging in) and the real values of `BookingStatus` (`models/lesson.dart` currently
+  interprets them by keyword).
 - **Demo mode**: `services/demo_server.dart` is a Dio `HttpClientAdapter` that answers like
   the real server; `SportivityApi.login('demo','demo')` and the `session` setter route to it
   (a restored demo session must go back to the demo, never to the network with a made-up

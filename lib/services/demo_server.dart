@@ -187,7 +187,8 @@ class DemoServer implements HttpClientAdapter {
     final (hour, name, activity, trainer, room, colour, capacity) = _templates[slot];
     final start = DateTime(day.year, day.month, day.day, hour);
     final taken = slot == _fullSlot ? capacity : (id * 7) % (capacity - 2);
-    final spots = capacity - taken - (_booked.contains(id) ? 1 : 0);
+    // SpotsInt counts the people going, not the free spots (see Lesson.participants).
+    final going = (taken + (_booked.contains(id) ? 1 : 0)).clamp(0, capacity);
     final status = _booked.contains(id)
         ? 'Booked'
         : _waiting.contains(id)
@@ -202,7 +203,7 @@ class DemoServer implements HttpClientAdapter {
       'LikedLesson': _liked.contains(id),
       'LocationName': _locationName,
       'LocationID': _locationId,
-      'SpotsInt': spots.clamp(0, capacity),
+      'SpotsInt': going,
       'MaximumParticipants': capacity,
       'LessonColor': colour,
       'UTCStartTime': start.toUtc().toIso8601String(),
@@ -211,7 +212,7 @@ class DemoServer implements HttpClientAdapter {
         'Activity': activity,
         'Trainer': trainer,
         'Location': room,
-        'Full': spots <= 0,
+        'Full': going >= capacity,
         'CanUseWaitingList': slot == _fullSlot,
         'AmountAsString': slot == _paidSlot ? '€ 7.50' : null,
         'AdditionalInformation':

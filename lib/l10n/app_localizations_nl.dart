@@ -334,15 +334,20 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String lessonSpots(int count) {
+  String lessonSpotsFree(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count plekken',
-      one: '1 plek',
-      zero: 'Geen plekken',
+      other: '$count plekken vrij',
+      one: '1 plek vrij',
+      zero: 'Geen plekken vrij',
     );
     return '$_temp0';
+  }
+
+  @override
+  String lessonGoing(int count) {
+    return '$count aangemeld';
   }
 
   @override
@@ -455,8 +460,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get lessonAbout => 'Over deze les';
 
   @override
-  String lessonSpotsOfMax(int spots, int max) {
-    return '$spots van $max plekken vrij';
+  String lessonGoingOfMax(int count, int max) {
+    return '$count van $max aangemeld';
   }
 
   @override

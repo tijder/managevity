@@ -18,7 +18,7 @@ void main() {
       'Full': 'false',
     })!;
     expect(lesson.id, 12);
-    expect(lesson.spotsLeft, 3);
+    expect(lesson.participants, 3);
     expect(lesson.trainer, isNull);
     expect(lesson.full, isFalse);
   });
@@ -57,6 +57,37 @@ void main() {
     test('booked', () {
       expect(const BookingStatus('Booked').isBooked, isTrue);
       expect(const BookingStatus('Geboekt').isBooked, isTrue);
+    });
+  });
+
+  group('SpotsInt counts the people going, not the free spots', () {
+    Lesson parse(Object spotsInt, Object max, {bool full = false}) => Lesson.tryFromJson({
+      '_id': 1,
+      'UTCStartTime': '2026-09-22T18:00:00Z',
+      'UTCEndTime': '2026-09-22T19:00:00Z',
+      'SpotsInt': spotsInt,
+      'MaximumParticipants': max,
+      'Full': full,
+    })!;
+
+    test('nobody booked yet: all spots free, not full', () {
+      final lesson = parse(0, 14);
+      expect((lesson.participants, lesson.spotsLeft, lesson.isFull), (0, 14, false));
+    });
+
+    test('some booked', () {
+      final lesson = parse(18, 24);
+      expect((lesson.participants, lesson.spotsLeft, lesson.isFull), (18, 6, false));
+    });
+
+    test('as many booked as the maximum: full (as the server says)', () {
+      final lesson = parse(12, 12, full: true);
+      expect((lesson.spotsLeft, lesson.isFull), (0, true));
+    });
+
+    test('without a maximum the free spots are unknown', () {
+      final lesson = parse(3, '');
+      expect((lesson.participants, lesson.spotsLeft, lesson.isFull), (3, null, false));
     });
   });
 }

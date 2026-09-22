@@ -17,7 +17,7 @@ class Lesson {
     this.trainer,
     this.additionalInformation,
     this.color,
-    this.spotsLeft,
+    this.participants,
     this.maximumParticipants,
     this.minimumParticipants,
     this.full = false,
@@ -41,7 +41,11 @@ class Lesson {
   final String? trainer;
   final String? additionalInformation;
   final String? color;
-  final int? spotsLeft;
+
+  /// How many people are booked. The API calls it `SpotsInt`, but it counts the spots
+  /// *taken*: across 231 lessons of a real schedule (probe, 22-09-2026) `Full` was true
+  /// exactly when it equalled `MaximumParticipants`, and it was never higher.
+  final int? participants;
   final int? maximumParticipants;
   final int? minimumParticipants;
   final bool full;
@@ -56,6 +60,14 @@ class Lesson {
   DateTime get start => startUtc.toLocal();
   DateTime get end => endUtc.toLocal();
   bool get isPast => endUtc.isBefore(DateTime.now().toUtc());
+
+  /// Spots still free; null when the maximum or the count is unknown.
+  int? get spotsLeft => participants == null || maximumParticipants == null
+      ? null
+      : (maximumParticipants! - participants!).clamp(0, maximumParticipants!);
+
+  /// Full according to the server, or by the numbers.
+  bool get isFull => full || spotsLeft == 0;
 
   /// Null if the JSON is not a usable lesson (no id or no times).
   static Lesson? tryFromJson(Json json) {
@@ -77,7 +89,7 @@ class Lesson {
       trainer: asString(json['Trainer']),
       additionalInformation: asString(json['AdditionalInformation']) ?? asString(json['ExtraInfo']),
       color: asString(json['LessonColor']),
-      spotsLeft: asInt(json['SpotsInt']),
+      participants: asInt(json['SpotsInt']),
       maximumParticipants: asInt(json['MaximumParticipants']),
       minimumParticipants: asInt(json['MinimumParticipants']),
       full: asBool(json['Full']),
@@ -103,7 +115,7 @@ class Lesson {
     'Trainer': trainer,
     'AdditionalInformation': additionalInformation,
     'LessonColor': color,
-    'SpotsInt': spotsLeft,
+    'SpotsInt': participants,
     'MaximumParticipants': maximumParticipants,
     'MinimumParticipants': minimumParticipants,
     'Full': full,
@@ -114,7 +126,7 @@ class Lesson {
     'ThirdPartyId': thirdPartyId,
   };
 
-  Lesson copyWith({BookingStatus? bookingStatus, bool? liked, int? spotsLeft}) => Lesson(
+  Lesson copyWith({BookingStatus? bookingStatus, bool? liked, int? participants}) => Lesson(
     id: id,
     description: description,
     startUtc: startUtc,
@@ -128,7 +140,7 @@ class Lesson {
     trainer: trainer,
     additionalInformation: additionalInformation,
     color: color,
-    spotsLeft: spotsLeft ?? this.spotsLeft,
+    participants: participants ?? this.participants,
     maximumParticipants: maximumParticipants,
     minimumParticipants: minimumParticipants,
     full: full,

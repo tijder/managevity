@@ -26,7 +26,7 @@ class DemoApi extends FakeSportivityApi {
       String room,
       String color, {
       String status = '',
-      int spots = 8,
+      int spots = 8, // free
       int max = 20,
       bool waiting = false,
     }) => Lesson(
@@ -40,7 +40,7 @@ class DemoApi extends FakeSportivityApi {
       activity: activity,
       trainer: trainer,
       color: color,
-      spotsLeft: spots,
+      participants: max - spots,
       maximumParticipants: max,
       full: spots == 0,
       canUseWaitingList: waiting,

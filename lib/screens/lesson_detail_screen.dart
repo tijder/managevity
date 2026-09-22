@@ -226,16 +226,17 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
                         ),
                       if (place.isNotEmpty)
                         InfoRow(icon: Icons.place_outlined, label: l10n.lessonRoom, value: place),
-                      if (lesson.spotsLeft != null)
+                      if (lesson.participants != null)
                         InfoRow(
                           icon: Icons.groups_outlined,
                           label: l10n.lessonParticipants,
-                          value: lesson.maximumParticipants == null
-                              ? l10n.lessonSpots(lesson.spotsLeft!)
-                              : l10n.lessonSpotsOfMax(
-                                  lesson.spotsLeft!,
-                                  lesson.maximumParticipants!,
-                                ),
+                          value: switch ((lesson.maximumParticipants, lesson.spotsLeft)) {
+                            (final max?, final left?) => [
+                              l10n.lessonGoingOfMax(lesson.participants!, max),
+                              if (lesson.isFull) l10n.lessonFull else l10n.lessonSpotsFree(left),
+                            ].join(' · '),
+                            _ => l10n.lessonGoing(lesson.participants!),
+                          },
                         ),
                     ],
                   ),
@@ -274,7 +275,7 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
         label: Text(l10n.lessonCancel),
       );
     }
-    final full = lesson.full || lesson.spotsLeft == 0;
+    final full = lesson.isFull;
     if (full && !lesson.canUseWaitingList) {
       return FilledButton(onPressed: null, child: Text(l10n.lessonFull));
     }

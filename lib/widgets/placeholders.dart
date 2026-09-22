@@ -27,7 +27,7 @@ Lesson _lesson(int i) {
     room: 'Room number 1',
     locationName: 'Name of the location',
     activity: 'Activities',
-    spotsLeft: 12,
+    participants: 12,
     maximumParticipants: 24,
     additionalInformation:
         'A short description of the lesson that runs over two or three lines, so that the '

@@ -93,21 +93,24 @@ class LessonCard extends StatelessWidget {
         foreground: scheme.onSecondaryContainer,
       );
     }
-    if (lesson.full || lesson.spotsLeft == 0) {
+    if (lesson.isFull) {
       return _Pill(
         label: l10n.lessonFull,
         background: scheme.errorContainer,
         foreground: scheme.onErrorContainer,
       );
     }
-    if (lesson.spotsLeft != null) {
+    final left = lesson.spotsLeft;
+    if (left != null || lesson.participants != null) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.groups_outlined, size: 18, color: scheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(
-            l10n.lessonSpots(lesson.spotsLeft!),
+            // What decides whether you can still go: the free spots. The count of people
+            // going is on the detail screen, and here only when the maximum is unknown.
+            left != null ? l10n.lessonSpotsFree(left) : l10n.lessonGoing(lesson.participants!),
             style: theme.textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
