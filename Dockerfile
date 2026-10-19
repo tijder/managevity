@@ -3,7 +3,7 @@
 #
 # The image does not build Flutter itself: build/web must already exist (tool/build-image.sh
 # locally, the web-build artifact in CI). That makes multi-arch free.
-FROM nginxinc/nginx-unprivileged:1.31.6-alpine
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine
 
 LABEL org.opencontainers.image.title="Managevity" \
       org.opencontainers.image.description="Managevity for Sportivity — unofficial client, not affiliated with b.o.s.s." \
