@@ -13,6 +13,7 @@ import 'package:managevity/providers/sync_provider.dart';
 import 'package:managevity/services/calendar/calendar_sync_target.dart';
 import 'package:managevity/services/calendar/sync_engine.dart';
 import 'package:managevity/services/sportivity_api.dart';
+import 'package:managevity/utils/dates.dart';
 import 'package:managevity/utils/errors.dart';
 
 import 'fixtures/fixtures.dart';
@@ -83,11 +84,11 @@ class _TruncatingApi extends FakeSportivityApi {
 
   @override
   Future<List<Lesson>> schedule(int locationId, DateTime from, DateTime to) =>
-      super.schedule(locationId, from, from.add(const Duration(days: 1)));
+      super.schedule(locationId, from, addDays(from, 1));
 }
 
 void main() {
-  final tomorrow = dayOf(DateTime.now()).add(const Duration(days: 1, hours: 9));
+  final tomorrow = addDays(DateTime.now(), 1, hour: 9);
 
   ProviderContainer build(
     FakeSportivityApi api, {
@@ -231,8 +232,8 @@ void main() {
     final today = dayOf(DateTime.now());
     final api = FakeSportivityApi(
       lessons: [
-        lessonFixture(id: 1, start: today.subtract(const Duration(days: 30)), status: 'Booked'),
-        lessonFixture(id: 2, start: today.subtract(const Duration(days: 2)), status: 'Booked'),
+        lessonFixture(id: 1, start: addDays(today, -30), status: 'Booked'),
+        lessonFixture(id: 2, start: addDays(today, -2), status: 'Booked'),
         lessonFixture(id: 3, start: tomorrow, status: 'Booked'),
       ],
     );
@@ -246,11 +247,7 @@ void main() {
     final monday = weekOf(dayOf(DateTime.now()));
     final api = FakeSportivityApi(
       lessons: [
-        for (var d = 0; d < 7; d++)
-          lessonFixture(
-            id: d + 1,
-            start: monday.add(Duration(days: d, hours: 19)),
-          ),
+        for (var d = 0; d < 7; d++) lessonFixture(id: d + 1, start: addDays(monday, d, hour: 19)),
       ],
     );
     final container = build(api);
@@ -264,7 +261,7 @@ void main() {
     // After that the week is in and the other days cost nothing more.
     await container.read(scheduleWeekProvider(monday).future);
     for (var d = 1; d < 7; d++) {
-      final lessons = await container.read(scheduleProvider(monday.add(Duration(days: d))).future);
+      final lessons = await container.read(scheduleProvider(addDays(monday, d)).future);
       expect(lessons.single.id, d + 1);
     }
     expect(api.scheduleCalls, [(monday, addDays(monday, 1)), (monday, addDays(monday, 7))]);
@@ -274,11 +271,11 @@ void main() {
     'schedule: an empty day is asked for separately once (server that truncates the range)',
     () async {
       final monday = weekOf(dayOf(DateTime.now()));
-      final wednesday = monday.add(const Duration(days: 2));
+      final wednesday = addDays(monday, 2);
       final api = _TruncatingApi(
         lessons: [
-          lessonFixture(id: 1, start: monday.add(const Duration(hours: 19))),
-          lessonFixture(id: 3, start: wednesday.add(const Duration(hours: 19))),
+          lessonFixture(id: 1, start: addDays(monday, 0, hour: 19)),
+          lessonFixture(id: 3, start: addDays(wednesday, 0, hour: 19)),
         ],
       );
       final container = build(api);
@@ -323,7 +320,7 @@ void main() {
   });
 
   test('history: who taught the lesson is fetched once and remembered after that', () async {
-    final past = dayOf(DateTime.now()).subtract(const Duration(days: 12, hours: -20));
+    final past = addDays(DateTime.now(), -12, hour: 20);
     final api = FakeSportivityApi(
       lessons: [lessonFixture(id: 9, start: past, status: 'Booked', trainer: 'Ruben Smit')],
     );

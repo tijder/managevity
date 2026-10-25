@@ -7,7 +7,7 @@ import 'package:managevity/models/invoice.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/membership.dart';
 import 'package:managevity/models/news_item.dart';
-import 'package:managevity/providers/lessons_provider.dart';
+import 'package:managevity/utils/dates.dart';
 
 import '../fixtures/fixtures.dart';
 
@@ -16,15 +16,8 @@ class DemoApi extends FakeSportivityApi {
   DemoApi() : super(lessons: _lessons()) {
     final today = dayOf(DateTime.now());
     guests
-      ..add(GuestPass(id: 1, name: 'Sam Porter', visitDate: today.add(const Duration(days: 2))))
-      ..add(
-        GuestPass(
-          id: 2,
-          name: 'Kim de Vries',
-          visitDate: today.subtract(const Duration(days: 9)),
-          used: true,
-        ),
-      );
+      ..add(GuestPass(id: 1, name: 'Sam Porter', visitDate: addDays(today, 2)))
+      ..add(GuestPass(id: 2, name: 'Kim de Vries', visitDate: addDays(today, -9), used: true));
   }
 
   static List<Lesson> _lessons() {
@@ -45,8 +38,8 @@ class DemoApi extends FakeSportivityApi {
     }) => Lesson(
       id: id,
       description: name,
-      startUtc: today.add(Duration(days: dayOffset, hours: hour)).toUtc(),
-      endUtc: today.add(Duration(days: dayOffset, hours: hour + 1)).toUtc(),
+      startUtc: addDays(today, dayOffset, hour: hour).toUtc(),
+      endUtc: addDays(today, dayOffset, hour: hour + 1).toUtc(),
       bookingStatus: BookingStatus(status),
       locationName: 'Example Sports Centre',
       room: room,

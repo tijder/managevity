@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:managevity/models/lesson.dart';
-import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/screens/schedule_screen.dart';
+import 'package:managevity/utils/dates.dart';
 
 import '../fixtures/fixtures.dart';
 import 'helpers.dart';
@@ -13,18 +13,14 @@ import 'helpers.dart';
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
-  final noon = dayOf(DateTime.now()).add(const Duration(hours: 12));
+  final noon = addDays(DateTime.now(), 0, hour: 12);
 
   testWidgets("shows today's lessons with their status", (tester) async {
     final api = FakeSportivityApi(
       lessons: [
         lessonFixture(id: 1, description: 'Yoga', start: noon, status: 'Booked'),
         lessonFixture(id: 2, description: 'Spinning', start: noon, spots: 0, activity: 'Spinning'),
-        lessonFixture(
-          id: 3,
-          description: 'Not until tomorrow',
-          start: noon.add(const Duration(days: 1)),
-        ),
+        lessonFixture(id: 3, description: 'Not until tomorrow', start: addDays(noon, 1, hour: 12)),
       ],
     );
     await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));

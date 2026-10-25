@@ -6,6 +6,7 @@ import 'package:managevity/models/profile_settings.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/services/demo_server.dart';
 import 'package:managevity/services/sportivity_api.dart';
+import 'package:managevity/utils/dates.dart';
 import 'package:managevity/utils/errors.dart';
 
 // The real client against the in-app demo server: no fakes, the same code path a reviewer
@@ -13,10 +14,7 @@ import 'package:managevity/utils/errors.dart';
 void main() {
   late SportivityApi api;
 
-  DateTime today() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime today() => dayOf(DateTime.now());
 
   setUp(() async {
     api = SportivityApi();
@@ -41,7 +39,7 @@ void main() {
 
   test('there is a full week of lessons, and every screen has data', () async {
     final location = (await api.locations()).single.id;
-    final week = await api.schedule(location, today(), today().add(const Duration(days: 7)));
+    final week = await api.schedule(location, today(), addDays(today(), 7));
     expect(week.length, greaterThan(30));
     expect(week.every((l) => l.trainer != null && l.room != null), isTrue);
 
@@ -59,17 +57,13 @@ void main() {
 
   test('booking and cancelling change what the server reports', () async {
     final location = (await api.locations()).single.id;
-    final tomorrow = today().add(const Duration(days: 1));
-    final lessons = await api.schedule(location, tomorrow, tomorrow.add(const Duration(days: 1)));
+    final tomorrow = addDays(today(), 1);
+    final lessons = await api.schedule(location, tomorrow, addDays(tomorrow, 1));
     final free = lessons.firstWhere((l) => !l.bookingStatus.isMine && !l.full && l.amount == null);
 
     expect((await api.joinLesson(free.id, location)).success, isTrue);
     expect((await api.lesson(free.id)).bookingStatus.isBooked, isTrue);
-    final window = await api.bookedLessons(
-      location,
-      today(),
-      today().add(const Duration(days: 56)),
-    );
+    final window = await api.bookedLessons(location, today(), addDays(today(), 56));
     expect(window.map((l) => l.id), contains(free.id));
 
     expect((await api.cancelLesson(free.id, location)).success, isTrue);
@@ -79,9 +73,9 @@ void main() {
   test('a full class puts you on the waiting list', () async {
     final location = (await api.locations()).single.id;
     // Not a Sunday: the lunchtime class does not run then.
-    var day = today().add(const Duration(days: 1));
-    if (day.weekday == DateTime.sunday) day = day.add(const Duration(days: 1));
-    final lessons = await api.schedule(location, day, day.add(const Duration(days: 1)));
+    var day = addDays(today(), 1);
+    if (day.weekday == DateTime.sunday) day = addDays(day, 1);
+    final lessons = await api.schedule(location, day, addDays(day, 1));
     final full = lessons.firstWhere((l) => l.full && !l.bookingStatus.isMine);
     expect(full.canUseWaitingList, isTrue);
 
@@ -93,9 +87,9 @@ void main() {
     final location = (await api.locations()).single.id;
     var saturday = today();
     while (saturday.weekday != DateTime.saturday) {
-      saturday = saturday.add(const Duration(days: 1));
+      saturday = addDays(saturday, 1);
     }
-    final lessons = await api.schedule(location, saturday, saturday.add(const Duration(days: 1)));
+    final lessons = await api.schedule(location, saturday, addDays(saturday, 1));
     final workshop = lessons.firstWhere((l) => l.amount != null);
 
     final refused = await api.joinLesson(workshop.id, location);
@@ -107,22 +101,14 @@ void main() {
 
   test('history has past lessons, with their trainer on request', () async {
     final location = (await api.locations()).single.id;
-    final past = await api.bookedLessons(
-      location,
-      today().subtract(const Duration(days: 365)),
-      today(),
-    );
+    final past = await api.bookedLessons(location, addDays(today(), -365), today());
     expect(past, isNotEmpty);
     expect((await api.lesson(past.first.id)).trainer, isNotNull);
   });
 
   test('profile, favourites and photo are remembered for the session', () async {
     final location = (await api.locations()).single.id;
-    final lesson = (await api.schedule(
-      location,
-      today(),
-      today().add(const Duration(days: 1)),
-    )).first;
+    final lesson = (await api.schedule(location, today(), addDays(today(), 1))).first;
     await api.likeLesson(lesson.id, location, like: true);
     expect((await api.likedLessons(location)).map((l) => l.id), contains(lesson.id));
 
@@ -191,7 +177,7 @@ void main() {
       membership,
       reason: 'Holiday',
       from: today(),
-      until: today().add(const Duration(days: 14)),
+      until: addDays(today(), 14),
     );
     membership = (await api.memberships(location)).single;
     expect(membership.allowFreeze, isFalse);

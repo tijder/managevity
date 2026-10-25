@@ -7,19 +7,13 @@ import '../models/lesson.dart';
 import '../services/cache_service.dart';
 import '../services/calendar/sync_engine.dart';
 import '../services/sportivity_api.dart';
+import '../utils/dates.dart';
 import 'services.dart';
 import 'session_provider.dart';
 import 'sync_provider.dart';
 
 /// How many days ahead booked lessons are fetched and synchronised.
 const kBookedDays = 56;
-
-DateTime dayOf(DateTime d) => DateTime(d.year, d.month, d.day);
-
-/// [days] calendar days after [d], at midnight. Not `d.add(Duration(days: …))`: that adds
-/// 24-hour blocks, and across the end of summer time midnight plus 24 hours is still the
-/// same day (23:00) — the API then gets StartDate == EndDate.
-DateTime addDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
 
 /// True while a list on screen came from the cache because the server could not be reached.
 /// Reported from inside provider builds, hence the microtask: Riverpod does not allow one
@@ -36,9 +30,6 @@ class OfflineNotifier extends Notifier<bool> {
 }
 
 final offlineProvider = NotifierProvider<OfflineNotifier, bool>(OfflineNotifier.new);
-
-/// The Monday of the week [day] falls in.
-DateTime weekOf(DateTime day) => DateTime(day.year, day.month, day.day - (day.weekday - 1));
 
 /// The schedule of a whole week in a single call, kept as stock: days that are in here cost
 /// no further request and no waiting. Stays around for ten minutes after the last screen

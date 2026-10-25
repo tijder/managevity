@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import '../utils/dates.dart';
+
 /// A pretend server that lives inside the app, for the demo login (`demo` / `demo`).
 ///
 /// App stores want reviewers to be able to try an app without a real account. This is a Dio
@@ -49,10 +51,10 @@ class DemoServer implements HttpClientAdapter {
     // A believable starting point: two bookings this week and a favourite.
     final today = _today();
     _booked
-      ..add(_lessonId(today.add(const Duration(days: 1)), 3))
-      ..add(_lessonId(today.add(const Duration(days: 3)), 5));
-    _waiting.add(_lessonId(today.add(const Duration(days: 2)), 2));
-    _liked.add(_lessonId(today.add(const Duration(days: 1)), 5));
+      ..add(_lessonId(addDays(today, 1), 3))
+      ..add(_lessonId(addDays(today, 3), 5));
+    _waiting.add(_lessonId(addDays(today, 2), 2));
+    _liked.add(_lessonId(addDays(today, 1), 5));
   }
 
   @override
@@ -289,10 +291,7 @@ class DemoServer implements HttpClientAdapter {
   /// The lunchtime class is always full, so the waiting list can be tried.
   static const _fullSlot = 2;
 
-  DateTime _today() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime _today() => dayOf(DateTime.now());
 
   int _dayNumber(DateTime day) =>
       DateTime.utc(day.year, day.month, day.day).difference(DateTime.utc(2024)).inDays;
@@ -347,10 +346,9 @@ class DemoServer implements HttpClientAdapter {
 
   Iterable<DateTime> _days(Map<String, String> query) sync* {
     final from = DateTime.tryParse(query['StartDate'] ?? '') ?? _today();
-    final to = DateTime.tryParse(query['EndDate'] ?? '') ?? from.add(const Duration(days: 1));
-    for (var day = DateTime(from.year, from.month, from.day); day.isBefore(to);) {
+    final to = DateTime.tryParse(query['EndDate'] ?? '') ?? addDays(from, 1);
+    for (var day = dayOf(from); day.isBefore(to); day = addDays(day, 1)) {
       yield day;
-      day = DateTime(day.year, day.month, day.day + 1);
     }
   }
 
@@ -367,7 +365,7 @@ class DemoServer implements HttpClientAdapter {
     // History: a few classes taken in the past, so that screen has something to show.
     final past = [
       for (final ago in const [2, 5, 9, 16, 23, 40])
-        _lessonId(_today().subtract(Duration(days: ago)), ago.isEven ? 3 : 5),
+        _lessonId(addDays(_today(), -ago), ago.isEven ? 3 : 5),
     ];
     return {
       'Response': 'OK',
@@ -580,12 +578,12 @@ class DemoServer implements HttpClientAdapter {
     'Newss': [
       {
         'Title': 'New opening hours',
-        'Date': _today().subtract(const Duration(days: 3)).toIso8601String(),
+        'Date': addDays(_today(), -3).toIso8601String(),
         'HTML': '<p>From next month we are open until 18:00 on Sundays.</p>',
       },
       {
         'Title': 'Welcome to the demo',
-        'Date': _today().subtract(const Duration(days: 10)).toIso8601String(),
+        'Date': addDays(_today(), -10).toIso8601String(),
         'HTML':
             '<p>Everything you see here is made up. Book, cancel and favourite as much as you '
             'like; it all resets when the app restarts.</p>',

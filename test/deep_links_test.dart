@@ -7,7 +7,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:managevity/l10n/l10n.dart';
 import 'package:managevity/models/gym_extras.dart';
 import 'package:managevity/models/session.dart';
-import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/services.dart';
 import 'package:managevity/providers/sync_provider.dart';
 import 'package:managevity/router/app_router.dart';
@@ -19,6 +18,7 @@ import 'package:managevity/screens/location_screen.dart';
 import 'package:managevity/screens/login_screen.dart';
 import 'package:managevity/screens/my_lessons_screen.dart';
 import 'package:managevity/services/calendar/sync_engine.dart';
+import 'package:managevity/utils/dates.dart';
 
 import 'fixtures/fixtures.dart';
 
@@ -26,7 +26,7 @@ import 'fixtures/fixtures.dart';
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
-  final tomorrow = dayOf(DateTime.now()).add(const Duration(days: 1, hours: 19));
+  final tomorrow = addDays(DateTime.now(), 1, hour: 19);
 
   Future<AppRouter> pumpApp(
     WidgetTester tester, {

@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../l10n/l10n.dart';
 import '../models/heatmap.dart';
 import '../providers/content_providers.dart';
-import '../providers/lessons_provider.dart';
+import '../utils/dates.dart';
 import '../widgets/async_view.dart';
 import '../widgets/responsive.dart';
 import '../widgets/placeholders.dart';

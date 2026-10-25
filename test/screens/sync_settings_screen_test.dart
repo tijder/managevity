@@ -5,13 +5,13 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:managevity/l10n/l10n.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/models/sync_settings.dart';
-import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/services.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/providers/sync_provider.dart';
 import 'package:managevity/screens/sync_settings_screen.dart';
 import 'package:managevity/services/calendar/sync_engine.dart';
 import 'package:managevity/services/calendar/calendar_sync_target.dart';
+import 'package:managevity/utils/dates.dart';
 import 'package:managevity/utils/errors.dart';
 
 import '../fixtures/fixtures.dart';
@@ -26,7 +26,7 @@ class _RefusingTarget extends FakeCalendarTarget {
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
-  final tomorrow = dayOf(DateTime.now()).add(const Duration(days: 1, hours: 19));
+  final tomorrow = addDays(DateTime.now(), 1, hour: 19);
 
   Future<(FakeSettingsService, FakeCredentialStore)> pump(
     WidgetTester tester,

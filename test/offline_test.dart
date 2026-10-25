@@ -10,6 +10,7 @@ import 'package:managevity/providers/sync_provider.dart';
 import 'package:managevity/services/calendar/calendar_sync_target.dart';
 import 'package:managevity/services/calendar/sync_engine.dart';
 import 'package:managevity/services/sportivity_api.dart';
+import 'package:managevity/utils/dates.dart';
 import 'package:managevity/utils/errors.dart';
 
 import 'fixtures/fixtures.dart';
@@ -55,7 +56,7 @@ class _BrokenCalendar implements CalendarSyncTarget {
 
 void main() {
   final today = dayOf(DateTime.now());
-  final tomorrow = today.add(const Duration(days: 1, hours: 19));
+  final tomorrow = addDays(today, 1, hour: 19);
 
   (ProviderContainer, FakeCacheService) build(
     FakeSportivityApi api, {
@@ -211,7 +212,7 @@ void main() {
   });
 
   test('history: offline shows what was loaded before', () async {
-    final past = today.subtract(const Duration(days: 3, hours: -19));
+    final past = addDays(today, -3, hour: 19);
     final api = _UnpluggableApi(
       lessons: [lessonFixture(id: 8, start: past, status: 'Booked')],
     );

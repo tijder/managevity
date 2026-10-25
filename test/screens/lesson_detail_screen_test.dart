@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:managevity/models/lesson.dart';
-import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/screens/lesson_detail_screen.dart';
 import 'package:managevity/services/sportivity_api.dart';
+import 'package:managevity/utils/dates.dart';
 
 import '../fixtures/fixtures.dart';
 import 'helpers.dart';
@@ -32,7 +32,7 @@ class _PaidLessonApi extends FakeSportivityApi {
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
-  final tomorrow = dayOf(DateTime.now()).add(const Duration(days: 1, hours: 19));
+  final tomorrow = addDays(DateTime.now(), 1, hour: 19);
 
   Future<void> pump(WidgetTester tester, FakeSportivityApi api) async {
     await tester.pumpWidget(
