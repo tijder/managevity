@@ -7,25 +7,25 @@ version: 0.1.0+1
 environment:
   sdk: ^3.13.0
   # Pinned exactly so subosito/flutter-action can read it with flutter-version-file.
-  flutter: 3.47.5
+  flutter: 3.47.8
 
 dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   flutter_riverpod: ^3.4.3
   dio: ^5.11.1
-  hive_ce_flutter: ^2.3.4
-  auto_route: ^11.1.0
+  hive_ce_flutter: ^2.5.0
+  auto_route: ^11.2.0
   intl: ^0.20.3
-  url_launcher: ^6.3.2
+  url_launcher: ^6.3.3
   flutter_secure_storage: ^11.2.0
-  device_calendar_plus: ^0.8.0
+  device_calendar_plus: ^0.12.0
   workmanager: ^0.10.10
   qr_flutter: ^4.1.0
-  xml: ^7.0.1
-  share_plus: ^13.3.0
+  xml: ^7.1.0
+  share_plus: ^13.3.1
   path_provider: ^2.1.6
   http: ^1.6.0
   flutter_localizations:
@@ -33,8 +33,8 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   skeletonizer: ^3.0.0
-  web: ^1.1.1
-  image_picker: ^1.2.3
+  web: ^1.1.2
+  image_picker: ^1.2.4
 dev_dependencies:
   flutter_test:
     sdk: flutter

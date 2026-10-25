@@ -68,7 +68,7 @@ class DeviceCalendarTarget implements CalendarSyncTarget {
     if (existing != null && await _isOurs(existing.ref, calendarId, event.uid)) {
       try {
         await _plugin.updateEvent(
-          eventId: existing.ref,
+          instanceId: existing.ref,
           title: event.title,
           startDate: event.startUtc.toLocal(),
           endDate: event.endUtc.toLocal(),
@@ -104,7 +104,7 @@ class DeviceCalendarTarget implements CalendarSyncTarget {
     // user's own events disappearing.
     if (!await _isOurs(existing.ref, calendarId)) return;
     try {
-      await _plugin.deleteEvent(eventId: existing.ref);
+      await _plugin.deleteEvent(instanceId: existing.ref);
     } on DeviceCalendarException catch (e) {
       if (e.errorCode != DeviceCalendarError.notFound) rethrow;
     }

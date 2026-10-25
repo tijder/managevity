@@ -46,6 +46,7 @@ class FakeDeviceCalendar implements DeviceCalendar {
     EventAvailability availability = EventAvailability.busy,
     RecurrenceRule? recurrenceRule,
     List<Duration>? reminders,
+    EventOptionsAndroid? android,
   }) async {
     final id = '${_nextId++}';
     events[id] = (calendarId: calendarId!, title: title, description: description);
@@ -54,7 +55,7 @@ class FakeDeviceCalendar implements DeviceCalendar {
 
   @override
   Future<void> updateEvent({
-    required String eventId,
+    required String instanceId,
     String? title,
     DateTime? startDate,
     DateTime? endDate,
@@ -65,9 +66,10 @@ class FakeDeviceCalendar implements DeviceCalendar {
     String? timeZone,
     EventAvailability? availability,
     Patch<List<Duration>>? reminders,
+    EventUpdateOptionsAndroid? android,
   }) async {
-    final old = events[eventId]!;
-    events[eventId] = (
+    final old = events[instanceId]!;
+    events[instanceId] = (
       calendarId: old.calendarId,
       title: title ?? old.title,
       description: switch (description) {
@@ -79,7 +81,7 @@ class FakeDeviceCalendar implements DeviceCalendar {
   }
 
   @override
-  Future<void> deleteEvent({required String eventId}) async => events.remove(eventId);
+  Future<void> deleteEvent({required String instanceId}) async => events.remove(instanceId);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
