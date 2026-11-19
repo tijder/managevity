@@ -291,6 +291,12 @@ abstract class AppLocalizations {
   /// **'This lesson is over.'**
   String get lessonPast;
 
+  /// No description provided for @lessonStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson has already started.'**
+  String get lessonStarted;
+
   /// No description provided for @lessonTrainer.
   ///
   /// In en, this message translates to:

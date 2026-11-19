@@ -110,6 +110,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonPast => 'This lesson is over.';
 
   @override
+  String get lessonStarted => 'This lesson has already started.';
+
+  @override
   String get lessonTrainer => 'Trainer';
 
   @override

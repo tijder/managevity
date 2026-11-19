@@ -33,6 +33,7 @@
   "lessonFull": "Full",
   "lessonAttended": "Attended",
   "lessonPast": "This lesson is over.",
+  "lessonStarted": "This lesson has already started.",
   "lessonTrainer": "Trainer",
   "lessonRoom": "Room",
   "lessonLike": "Favourite",

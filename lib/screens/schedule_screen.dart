@@ -128,10 +128,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 CardGrid(
                   children: [
                     for (final lesson in shown)
-                      LessonCard(
-                        lesson: lesson,
-                        onTap: () => context.router.push(LessonDetailRoute(lessonId: lesson.id)),
-                      ),
+                      LessonCard(lesson: lesson, onTap: () => openLesson(context, ref, lesson)),
                   ],
                 ),
               ],

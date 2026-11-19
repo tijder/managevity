@@ -369,9 +369,40 @@ final pastLessonProvider = FutureProvider.autoDispose.family<Lesson?, int>(
   (ref, id) => ref.watch(pastLessonDetailsProvider).load(id),
 );
 
+/// Lessons as a list last showed them, by id. A card hands its lesson over when it is
+/// tapped, so the detail screen has something to draw at once — and something to fall back
+/// on without a connection — while every page keeps a plain URL with just the id in it.
+class LessonPreviews {
+  final _byId = <int, Lesson>{};
+
+  void remember(Lesson lesson) => _byId[lesson.id] = lesson;
+
+  Lesson? operator [](int id) => _byId[id];
+}
+
+final lessonPreviewsProvider = Provider<LessonPreviews>((ref) {
+  // Somebody else's lessons must not survive a sign-out.
+  ref.watch(sessionProvider.select((s) => s.value?.loggedIn));
+  return LessonPreviews();
+});
+
+/// A single lesson in full. When the server cannot be reached: the lesson as the list
+/// showed it, or as it was stored with the booked lessons, under the offline notice.
 final lessonProvider = FutureProvider.autoDispose.family<Lesson, int>((ref, id) async {
   final api = ref.watch(apiProvider);
-  return api.lesson(id);
+  try {
+    final lesson = await api.lesson(id);
+    ref.read(offlineProvider.notifier).report(offline: false);
+    return lesson;
+  } on SportivityException catch (e) {
+    if (!e.isUnreachable) rethrow;
+    final known =
+        ref.read(lessonPreviewsProvider)[id] ??
+        (await ref.read(cacheServiceProvider).loadDetails())[id]?.lesson;
+    if (known == null) rethrow;
+    ref.read(offlineProvider.notifier).report(offline: true);
+    return known;
+  }
 });
 
 final likedLessonsProvider = FutureProvider.autoDispose<List<Lesson>>((ref) async {

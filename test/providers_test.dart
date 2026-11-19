@@ -290,7 +290,9 @@ void main() {
 
   test('schedule: booking a lesson shows up in the day that is on screen', () async {
     final day = addDays(dayOf(DateTime.now()), 1);
-    final api = FakeSportivityApi(lessons: [lessonFixture(id: 1, start: addDays(day, 0, hour: 19))]);
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(id: 1, start: addDays(day, 0, hour: 19))],
+    );
     final container = build(api);
     await container.read(sessionProvider.future);
     // The schedule screen keeps listening while the lesson is open on top of it.
@@ -307,7 +309,9 @@ void main() {
 
   test('schedule: the day follows a week that is being fetched again, in one call', () async {
     final day = addDays(dayOf(DateTime.now()), 1);
-    final api = FakeSportivityApi(lessons: [lessonFixture(id: 1, start: addDays(day, 0, hour: 19))]);
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(id: 1, start: addDays(day, 0, hour: 19))],
+    );
     final container = build(api);
     await container.read(sessionProvider.future);
     final screen = container.listen(scheduleProvider(day), (_, _) {});

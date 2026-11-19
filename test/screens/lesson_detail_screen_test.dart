@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:managevity/models/lesson.dart';
+import 'package:managevity/providers/lessons_provider.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/screens/lesson_detail_screen.dart';
 import 'package:managevity/services/sportivity_api.dart';
 import 'package:managevity/utils/dates.dart';
+import 'package:managevity/utils/errors.dart';
 
 import '../fixtures/fixtures.dart';
 import 'helpers.dart';
@@ -27,6 +31,28 @@ class _PaidLessonApi extends FakeSportivityApi {
       message: 'Payment required',
     );
   }
+}
+
+/// Remembers what the server was told about the heart, and answers when the test says so.
+class _LikingApi extends FakeSportivityApi {
+  _LikingApi({super.lessons});
+
+  final likes = <bool>[];
+  var gate = Completer<void>();
+
+  @override
+  Future<bool> likeLesson(int lessonId, int locationId, {required bool like}) async {
+    likes.add(like);
+    await gate.future;
+    lessons = [for (final l in lessons) l.id == lessonId ? l.copyWith(liked: like) : l];
+    return true;
+  }
+}
+
+/// No connection for the lesson itself.
+class _UnreachableLessonApi extends FakeSportivityApi {
+  @override
+  Future<Lesson> lesson(int lessonId) async => throw const SportivityException(AppError.network);
 }
 
 void main() {
@@ -114,6 +140,70 @@ void main() {
     expect(find.text('Book'), findsOneWidget);
   });
 
+  testWidgets('the cancel question says which lesson, and when', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(id: 5, description: 'Yin yoga', start: tomorrow, status: 'Booked')],
+    );
+    await pump(tester, api);
+    await tester.tap(find.text('Cancel booking'));
+    await tester.pumpAndSettle();
+    final dialog = find.byType(AlertDialog);
+    expect(find.descendant(of: dialog, matching: find.textContaining('Yin yoga')), findsOneWidget);
+    expect(find.descendant(of: dialog, matching: find.textContaining('19:00')), findsOneWidget);
+  });
+
+  testWidgets('a lesson that is under way can no longer be booked', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(id: 5, start: DateTime.now().subtract(const Duration(minutes: 10)))],
+    );
+    await pump(tester, api);
+    expect(find.text('This lesson has already started.'), findsOneWidget);
+    expect(find.text('Book'), findsNothing);
+  });
+
+  testWidgets('the heart turns at once and a second tap waits for the first', (tester) async {
+    final api = _LikingApi(lessons: [lessonFixture(id: 5, start: tomorrow)]);
+    await pump(tester, api);
+
+    await tester.tap(find.byIcon(Icons.favorite_border));
+    await tester.pump();
+    expect(find.byIcon(Icons.favorite), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.favorite));
+    await tester.pump();
+    expect(api.likes, [true]);
+
+    api.gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.favorite), findsOneWidget);
+
+    api.gate = Completer<void>()..complete();
+    await tester.tap(find.byIcon(Icons.favorite));
+    await tester.pumpAndSettle();
+    expect(api.likes, [true, false]);
+    expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+  });
+
+  testWidgets('without a connection the lesson from the list is shown', (tester) async {
+    final lesson = lessonFixture(id: 5, description: 'Yin yoga', start: tomorrow);
+    await tester.pumpWidget(
+      testApp(
+        _WithSession(
+          child: _Remembered(lesson: lesson, child: const LessonDetailScreen(lessonId: 5)),
+        ),
+        api: _UnreachableLessonApi(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Yin yoga'), findsWidgets);
+    expect(find.text('Anna'), findsOneWidget);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets('without a connection and never seen: an error with a retry', (tester) async {
+    await pump(tester, _UnreachableLessonApi());
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
   testWidgets('full lesson without a waiting list: the button is disabled', (tester) async {
     final api = FakeSportivityApi(lessons: [lessonFixture(id: 5, start: tomorrow, spots: 0)]);
     await pump(tester, api);
@@ -129,4 +219,17 @@ class _WithSession extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) =>
       ref.watch(sessionProvider).value?.ready == true ? child : const SizedBox.shrink();
+}
+
+/// As if the lesson was tapped in a list: that is where the detail screen gets its preview.
+class _Remembered extends ConsumerWidget {
+  const _Remembered({required this.lesson, required this.child});
+  final Lesson lesson;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.read(lessonPreviewsProvider).remember(lesson);
+    return child;
+  }
 }

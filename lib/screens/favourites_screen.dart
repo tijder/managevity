@@ -41,8 +41,7 @@ class FavouritesScreen extends ConsumerWidget {
                           LessonCard(
                             lesson: lesson,
                             showDate: true,
-                            onTap: () =>
-                                context.router.push(LessonDetailRoute(lessonId: lesson.id)),
+                            onTap: () => openLesson(context, ref, lesson),
                           ),
                       ],
                     ),

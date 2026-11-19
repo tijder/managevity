@@ -88,8 +88,7 @@ class _MyLessonsScreenState extends ConsumerState<MyLessonsScreen> {
                             : LessonCard(
                                 lesson: lessons[i],
                                 showDate: true,
-                                onTap: () =>
-                                    context.router.push(LessonDetailRoute(lessonId: lessons[i].id)),
+                                onTap: () => openLesson(context, ref, lessons[i]),
                               ),
                       ),
               ),
@@ -111,11 +110,8 @@ class _PastLessonCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(pastLessonProvider(lesson.id)).value;
-    return LessonCard(
-      // The times and the status remain those from the list; the details only fill in.
-      lesson: details?.copyWith(bookingStatus: lesson.bookingStatus) ?? lesson,
-      showDate: true,
-      onTap: () => context.router.push(LessonDetailRoute(lessonId: lesson.id)),
-    );
+    // The times and the status remain those from the list; the details only fill in.
+    final shown = details?.copyWith(bookingStatus: lesson.bookingStatus) ?? lesson;
+    return LessonCard(lesson: shown, showDate: true, onTap: () => openLesson(context, ref, shown));
   }
 }

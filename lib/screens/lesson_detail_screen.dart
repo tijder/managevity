@@ -13,6 +13,7 @@ import '../services/sportivity_api.dart';
 import '../utils/color.dart';
 import '../utils/html_text.dart';
 import '../widgets/async_view.dart';
+import '../widgets/confirm_action.dart';
 import '../widgets/responsive.dart';
 import '../widgets/placeholders.dart';
 
@@ -28,6 +29,10 @@ class LessonDetailScreen extends ConsumerStatefulWidget {
 
 class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
   bool _busy = false;
+
+  /// What the heart shows while (and after) the server is told; null follows the lesson.
+  bool? _liked;
+  bool _liking = false;
 
   Future<void> _run(Future<BookingResult> Function() action) async {
     final l10n = context.l10n;
@@ -55,54 +60,58 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
     if (result.success || !result.needsPayment || !mounted) return result;
     final amount = result.lesson?.amount ?? lesson.amount;
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.lessonBuyTitle),
-        content: Text(amount == null ? l10n.lessonBuyUnknownAmount : l10n.lessonBuyAmount(amount)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.back)),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.lessonBuyConfirm),
-          ),
-        ],
-      ),
+    final confirmed = await confirmAction(
+      context,
+      title: l10n.lessonBuyTitle,
+      lines: [
+        _what(lesson),
+        amount == null ? l10n.lessonBuyUnknownAmount : l10n.lessonBuyAmount(amount),
+      ],
+      confirmLabel: l10n.lessonBuyConfirm,
     );
-    return confirmed == true ? booked.book(lesson, buy: true) : result;
+    return confirmed ? booked.book(lesson, buy: true) : result;
   });
+
+  /// The lesson in one line, for a question about it: which one, and when.
+  String _what(Lesson lesson) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final time = DateFormat.Hm(locale);
+    return '${lesson.description}\n${DateFormat.MMMMEEEEd(locale).format(lesson.start)}  ·  '
+        '${time.format(lesson.start)} – ${time.format(lesson.end)}';
+  }
 
   Future<void> _cancel(Lesson lesson) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(l10n.lessonCancelConfirm),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.back)),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.lessonCancel),
-          ),
-        ],
-      ),
+    final confirmed = await confirmAction(
+      context,
+      title: l10n.lessonCancelConfirm,
+      lines: [_what(lesson)],
+      confirmLabel: l10n.lessonCancel,
     );
-    if (confirmed == true) {
+    if (confirmed && mounted) {
       await _run(() => ref.read(bookedLessonsProvider.notifier).cancel(lesson));
     }
   }
 
   Future<void> _toggleLike(Lesson lesson) async {
+    if (_liking) return;
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
+    final like = !(_liked ?? lesson.liked);
+    // The heart turns at once; a second tap waits until the server has heard the first.
+    setState(() {
+      _liking = true;
+      _liked = like;
+    });
     try {
-      await ref
-          .read(apiProvider)
-          .likeLesson(lesson.id, ref.read(locationIdProvider), like: !lesson.liked);
+      await ref.read(apiProvider).likeLesson(lesson.id, ref.read(locationIdProvider), like: like);
       ref.invalidate(lessonProvider(lesson.id));
       ref.invalidate(likedLessonsProvider);
     } catch (e) {
+      if (mounted) setState(() => _liked = null);
       messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _liking = false);
     }
   }
 
@@ -110,24 +119,33 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final value = ref.watch(lessonProvider(widget.lessonId));
-    final lesson = value.value;
+    final loaded = ref.watch(lessonProvider(widget.lessonId));
+    // What the list knew, until the full lesson is in: the page is there at once. Nothing
+    // can be done with it yet (see the button below) — a status from a list may be old.
+    final preview = ref.watch(lessonPreviewsProvider)[widget.lessonId];
+    final value = loaded.hasValue || loaded.hasError || preview == null
+        ? loaded
+        : AsyncData(preview);
+    final lesson = loaded.value;
+    final shown = value.value;
+    final liked = _liked ?? lesson?.liked ?? false;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(lesson?.description ?? ''),
+        title: Text(shown?.description ?? ''),
         actions: [
           if (lesson != null)
             IconButton(
               tooltip: l10n.lessonLike,
-              icon: Icon(lesson.liked ? Icons.favorite : Icons.favorite_border),
+              isSelected: liked,
+              icon: Icon(liked ? Icons.favorite : Icons.favorite_border),
               onPressed: () => _toggleLike(lesson),
             ),
         ],
       ),
       // The button is pinned to the bottom: with a long description you do not have to
       // scroll to be able to book.
-      bottomNavigationBar: lesson == null
+      bottomNavigationBar: shown == null
           ? null
           : SafeArea(
               child: Center(
@@ -136,7 +154,10 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
                   constraints: const BoxConstraints(maxWidth: 760),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: SizedBox(width: double.infinity, child: _action(l10n, lesson)),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: _action(l10n, shown, enabled: lesson != null && !_busy),
+                    ),
                   ),
                 ),
               ),
@@ -261,16 +282,19 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
     );
   }
 
-  Widget _action(AppLocalizations l10n, Lesson lesson) {
-    if (lesson.isPast) {
+  Widget _action(AppLocalizations l10n, Lesson lesson, {required bool enabled}) {
+    if (lesson.hasStarted) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(l10n.lessonPast, textAlign: TextAlign.center),
+        child: Text(
+          lesson.isPast ? l10n.lessonPast : l10n.lessonStarted,
+          textAlign: TextAlign.center,
+        ),
       );
     }
     if (lesson.bookingStatus.isMine) {
       return OutlinedButton.icon(
-        onPressed: _busy ? null : () => _cancel(lesson),
+        onPressed: enabled ? () => _cancel(lesson) : null,
         icon: const Icon(Icons.event_busy),
         label: Text(l10n.lessonCancel),
       );
@@ -280,7 +304,7 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
       return FilledButton(onPressed: null, child: Text(l10n.lessonFull));
     }
     return FilledButton.icon(
-      onPressed: _busy ? null : () => _book(lesson),
+      onPressed: enabled ? () => _book(lesson) : null,
       icon: const Icon(Icons.event_available),
       label: Text(full ? l10n.lessonJoinWaitingList : l10n.lessonBook),
     );

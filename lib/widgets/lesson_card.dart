@@ -21,7 +21,7 @@ class LessonCard extends StatelessWidget {
     final subtitle = [lesson.trainer, lesson.room].nonNulls.join(' · ');
 
     // A lesson that has already started is still listed but is no longer in play.
-    final started = lesson.startUtc.isBefore(DateTime.now().toUtc());
+    final started = lesson.hasStarted;
 
     return Opacity(
       opacity: started && !showDate ? 0.55 : 1,

@@ -2,6 +2,8 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/lesson.dart';
+import '../providers/lessons_provider.dart';
 import '../providers/session_provider.dart';
 import '../screens/about_screen.dart';
 import '../screens/busy_screen.dart';
@@ -132,4 +134,11 @@ Future<void> continueAfterSession(StackRouter router, WidgetRef ref) async {
   await router.replaceAll([const MainRoute()]);
   // With the prefix matches a deep page gets the main screen under it, so "back" works.
   if (path != null) await router.navigatePath(path, includePrefixMatches: true);
+}
+
+/// Opens the page of [lesson] and hands over what the list already knows about it, so the
+/// page can draw at once (and has something to show without a connection).
+void openLesson(BuildContext context, WidgetRef ref, Lesson lesson) {
+  ref.read(lessonPreviewsProvider).remember(lesson);
+  context.router.push(LessonDetailRoute(lessonId: lesson.id));
 }

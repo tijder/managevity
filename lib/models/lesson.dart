@@ -61,6 +61,9 @@ class Lesson {
   DateTime get end => endUtc.toLocal();
   bool get isPast => endUtc.isBefore(DateTime.now().toUtc());
 
+  /// Under way or over: still listed, but no longer something to book or cancel.
+  bool get hasStarted => startUtc.isBefore(DateTime.now().toUtc());
+
   /// Spots still free; null when the maximum or the count is unknown.
   int? get spotsLeft => participants == null || maximumParticipants == null
       ? null
