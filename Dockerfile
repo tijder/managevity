@@ -22,10 +22,15 @@ LABEL org.opencontainers.image.title="Managevity" \
 ENV SPORTIVITY_UPSTREAM=https://www.sportivity.com \
     NEXTCLOUD_UPSTREAM= \
     UPSTREAM_CA_FILE=/etc/ssl/certs/ca-certificates.crt \
+    # Requests to /api/ per client address, and how many may come at once.
+    API_RATE=10r/s \
+    API_BURST=40 \
+    # Content-Security-Policy-Report-Only to try a policy without enforcing it.
+    CSP_HEADER=Content-Security-Policy \
     # Have the entrypoint take the resolvers from /etc/resolv.conf (IPv6 too, in brackets).
     NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
     # Substitute only these variables, so $uri and friends survive in the template.
-    NGINX_ENVSUBST_FILTER='^(SPORTIVITY_UPSTREAM|UPSTREAM_CA_FILE|NGINX_LOCAL_RESOLVERS)$'
+    NGINX_ENVSUBST_FILTER='^(SPORTIVITY_UPSTREAM|UPSTREAM_CA_FILE|NGINX_LOCAL_RESOLVERS|API_RATE|API_BURST|CSP_HEADER)$'
 
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --chmod=0755 docker/18-dav-proxy.sh /docker-entrypoint.d/18-dav-proxy.sh

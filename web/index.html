@@ -137,13 +137,8 @@
     <noscript><p><strong>This app needs JavaScript to run.</strong></p></noscript>
   </main>
 
-  <script>
-    // Once Flutter has painted its first frame the static text has done its job.
-    window.addEventListener('flutter-first-frame', function () {
-      var el = document.getElementById('static-content');
-      if (el) el.remove();
-    });
-  </script>
+  <!-- A file rather than inline: the Content-Security-Policy allows no inline scripts. -->
+  <script src="first_frame.js"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

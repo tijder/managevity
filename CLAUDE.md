@@ -174,7 +174,14 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
 `Dockerfile` only copies `build/web` into nginx-unprivileged; it does not build Flutter.
 `docker/default.conf.template` + `docker/18-dav-proxy.sh` make up the proxy: `/api/` →
 Sportivity, and `/remote.php/dav/` → `NEXTCLOUD_UPSTREAM` when that is set (same path as
-Nextcloud, so DAV hrefs stay correct). Watch out with nginx: an `add_header` in a
+Nextcloud, so DAV hrefs stay correct). `/api/` is rate-limited per client address (`API_RATE`/`API_BURST`, 429 rather than 503: the
+app reads 503 as "offline"). A Content-Security-Policy allows only this origin plus
+`fonts.gstatic.com` (Flutter's fallback fonts); that is why `web/index.html` has no inline
+script (`web/first_frame.js`) and the web build gets `--csp`. `.mjs` needs its own
+`location`: nginx's mime.types does not know it, and the wasm build starts from
+`main.dart.mjs`. Check a change here in a real Chromium with WebGL — without it the browser
+quietly takes the JavaScript build and the wasm path goes untested.
+Watch out with nginx: an `add_header` in a
 `location` switches off all `add_header`s of the server block — hence the `map` for
 `Cache-Control`.
 

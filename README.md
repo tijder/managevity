@@ -58,6 +58,8 @@ podman run --rm -p 8080:8080 ghcr.io/<owner>/managevity:latest
 |---|---|---|
 | `SPORTIVITY_UPSTREAM` | `https://www.sportivity.com` | where `/api/` goes |
 | `NEXTCLOUD_UPSTREAM` | *(empty)* | set to `https://cloud.example.org` to enable CalDAV sync in the browser; the proxy then serves `/remote.php/dav/` |
+| `API_RATE` / `API_BURST` | `10r/s` / `40` | how many requests one client address may send to `/api/`; more gets a 429. Behind another reverse proxy all visitors share this |
+| `CSP_HEADER` | `Content-Security-Policy` | set to `Content-Security-Policy-Report-Only` to have the browser report violations in its console without blocking |
 | `UPSTREAM_CA_FILE` | system bundle | CA bundle for the upstreams, for example with a private CA |
 
 The proxy only knows these fixed upstreams and never forwards to a host taken from the

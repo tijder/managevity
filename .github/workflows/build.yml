@@ -185,7 +185,7 @@ jobs:
       - name: Build Web
         run: |
           # shellcheck disable=SC2086
-          flutter build web --release --wasm --no-web-resources-cdn \
+          flutter build web --release --wasm --csp --no-web-resources-cdn \
             --dart-define=API_BASE=/api $VERSION_FLAGS
 
       - name: Upload Web Build

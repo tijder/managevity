@@ -8,6 +8,11 @@ map $uri $cache_control {
     ~^/(index\.html|flutter_bootstrap\.js|flutter_service_worker\.js|version\.json)?$  "no-cache";
 }
 
+# Somebody else's server is behind /api/: one address may not use this proxy to hammer it.
+# The app itself stays far below this (a cold start is a dozen requests). Behind another
+# reverse proxy every visitor arrives from that proxy's address and shares this allowance.
+limit_req_zone $binary_remote_addr zone=api:10m rate=${API_RATE};
+
 server {
     # Dual-stack: probes and Services may come in over IPv6.
     listen 8080;
@@ -31,6 +36,11 @@ server {
     add_header Cross-Origin-Opener-Policy same-origin always;
     add_header Cross-Origin-Embedder-Policy credentialless always;
     add_header Cache-Control $cache_control;
+    # Only our own files, the proxies on this origin, and Google's font server (Flutter
+    # fetches fallback fonts for characters Roboto lacks). 'wasm-unsafe-eval' is what
+    # compiling WebAssembly is called; inline styles are how Flutter positions its canvas.
+    # CSP_HEADER decides whether this is enforced or only reported in the browser console.
+    add_header ${CSP_HEADER} "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
 
     location = /healthz {
         access_log off;
@@ -39,6 +49,9 @@ server {
     }
 
     location /api/ {
+        limit_req zone=api burst=${API_BURST} nodelay;
+        # Not the default 503: the app takes that for "server unreachable" and goes offline.
+        limit_req_status 429;
         set $sportivity ${SPORTIVITY_UPSTREAM};
         rewrite ^/api/(.*)$ /SportivityAppV3/$1 break;
         proxy_pass $sportivity;
@@ -47,6 +60,15 @@ server {
 
     # Empty as long as NEXTCLOUD_UPSTREAM is not set; see 18-dav-proxy.sh.
     include /etc/nginx/conf.d/dav.inc;
+
+    # The WebAssembly build starts from an ES module, main.dart.mjs. nginx's mime.types does
+    # not know .mjs and would serve it as application/octet-stream, which a browser refuses
+    # to run as a module (the more so with nosniff): the app would stay on its loading text
+    # in every browser that takes the WebAssembly path.
+    location ~ \.mjs$ {
+        types { }
+        default_type application/javascript;
+    }
 
     location / {
         # SPA: unknown paths are routes of the app.
