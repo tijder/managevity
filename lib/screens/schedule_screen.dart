@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,7 +74,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         child: AsyncView(
           value: lessons,
           placeholder: placeholderLessons,
-          onRetry: () => ref.invalidate(scheduleWeekProvider(weekOf(_day))),
+          onRetry: () => unawaited(refreshSchedule(ref, _day).then((_) {}, onError: (_) {})),
           builder: (all) {
             final activities = {for (final l in all) ?l.activity}.toList()..sort();
             final activity = activities.contains(_activity) ? _activity : null;

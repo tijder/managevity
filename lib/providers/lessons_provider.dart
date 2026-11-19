@@ -99,9 +99,24 @@ final scheduleProvider = FutureProvider.autoDispose.family<List<Lesson>, DateTim
 
   // exists before read: merely reading would trigger the week fetch, which is exactly what
   // has to wait until this day is in. And read, not watch: when the week arrives later,
-  // this day does not need to reload.
+  // this day does not need to reload. The price of not watching is that whoever invalidates
+  // the week has to invalidate the day as well (see [refreshSchedule]).
   final weekProvider = scheduleWeekProvider(monday);
-  final week = ref.exists(weekProvider) ? ref.read(weekProvider).value : null;
+  List<Lesson>? week;
+  if (ref.exists(weekProvider)) {
+    final state = ref.read(weekProvider);
+    if (!state.isLoading) {
+      week = state.value;
+    } else {
+      // On its way (the head start below, or a refresh): wait for it rather than ask for
+      // the day next to it. A value it still carries is the one from before the refresh.
+      try {
+        week = await ref.read(weekProvider.future);
+      } on Exception {
+        // Falls through to the day on its own, which knows about offline.
+      }
+    }
+  }
   if (week != null) {
     final lessons = ofDay(week);
     // An empty day in a filled week may be a rest day, but also a server that cuts the
@@ -133,9 +148,11 @@ final scheduleProvider = FutureProvider.autoDispose.family<List<Lesson>, DateTim
   return lessons;
 });
 
-/// Fetches the week of [day] again.
+/// Fetches the week of [day] again. The day does not watch the week, so it is invalidated
+/// along with it — otherwise it would keep answering with what it had.
 Future<void> refreshSchedule(WidgetRef ref, DateTime day) async {
   ref.invalidate(scheduleWeekProvider(weekOf(day)));
+  ref.invalidate(scheduleProvider(day));
   await ref.read(scheduleProvider(day).future);
 }
 
@@ -264,7 +281,9 @@ class BookedLessonsNotifier extends AsyncNotifier<List<Lesson>> {
   /// A failed refresh is logged and the list simply catches up at the next fetch. The
   /// calendar is not waited for: the user gets their answer as soon as the list is fresh.
   Future<void> _afterChange(Lesson lesson) async {
-    ref.invalidate(scheduleWeekProvider(weekOf(dayOf(lesson.start))));
+    final day = dayOf(lesson.start);
+    ref.invalidate(scheduleWeekProvider(weekOf(day)));
+    ref.invalidate(scheduleProvider(day));
     ref.invalidate(lessonProvider(lesson.id));
     try {
       final lessons = await _refresh();

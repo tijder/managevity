@@ -288,6 +288,42 @@ void main() {
     },
   );
 
+  test('schedule: booking a lesson shows up in the day that is on screen', () async {
+    final day = addDays(dayOf(DateTime.now()), 1);
+    final api = FakeSportivityApi(lessons: [lessonFixture(id: 1, start: addDays(day, 0, hour: 19))]);
+    final container = build(api);
+    await container.read(sessionProvider.future);
+    // The schedule screen keeps listening while the lesson is open on top of it.
+    final screen = container.listen(scheduleProvider(day), (_, _) {});
+    await container.read(scheduleProvider(day).future);
+    await container.read(scheduleWeekProvider(weekOf(day)).future);
+    expect(screen.read().value!.single.bookingStatus.isBooked, isFalse);
+
+    await container.read(bookedLessonsProvider.notifier).book(api.lessons.single);
+    final after = await container.read(scheduleProvider(day).future);
+    expect(after.single.bookingStatus.isBooked, isTrue);
+    expect(screen.read().value!.single.bookingStatus.isBooked, isTrue);
+  });
+
+  test('schedule: the day follows a week that is being fetched again, in one call', () async {
+    final day = addDays(dayOf(DateTime.now()), 1);
+    final api = FakeSportivityApi(lessons: [lessonFixture(id: 1, start: addDays(day, 0, hour: 19))]);
+    final container = build(api);
+    await container.read(sessionProvider.future);
+    final screen = container.listen(scheduleProvider(day), (_, _) {});
+    await container.read(scheduleProvider(day).future);
+    await container.read(scheduleWeekProvider(weekOf(day)).future);
+    final before = api.scheduleCalls.length;
+
+    // What refreshSchedule does, after the server has changed its mind.
+    api.lessons = [lessonFixture(id: 2, start: addDays(day, 0, hour: 19))];
+    container.invalidate(scheduleWeekProvider(weekOf(day)));
+    container.invalidate(scheduleProvider(day));
+    expect((await container.read(scheduleProvider(day).future)).single.id, 2);
+    expect(screen.read().value!.single.id, 2);
+    expect(api.scheduleCalls, hasLength(before + 1));
+  });
+
   test('lesson details are kept for a day and not fetched again on every sync', () async {
     final api = FakeSportivityApi(
       lessons: [lessonFixture(id: 5, start: tomorrow, status: 'Booked')],
