@@ -7,6 +7,7 @@ import '../l10n/l10n.dart';
 import '../providers/lessons_provider.dart';
 import '../providers/session_provider.dart';
 import '../router/app_router.dart';
+import '../widgets/resume_refresh.dart';
 
 @RoutePage()
 class MainScreen extends ConsumerWidget {
@@ -23,48 +24,54 @@ class MainScreen extends ConsumerWidget {
       (Icons.bar_chart_outlined, Icons.bar_chart, l10n.tabBusy),
       (Icons.more_horiz, Icons.more_horiz, l10n.tabMore),
     ];
-    return AutoTabsRouter(
-      routes: const [ScheduleRoute(), MyLessonsRoute(), BusyRoute(), MoreRoute()],
-      builder: (context, child) {
-        final tabs = AutoTabsRouter.of(context);
-        final wide = MediaQuery.sizeOf(context).width >= 720;
-        if (wide) {
+    return ResumeRefresh(
+      child: AutoTabsRouter(
+        routes: const [ScheduleRoute(), MyLessonsRoute(), BusyRoute(), MoreRoute()],
+        builder: (context, child) {
+          final tabs = AutoTabsRouter.of(context);
+          final wide = MediaQuery.sizeOf(context).width >= 720;
+          if (wide) {
+            return Scaffold(
+              body: Row(
+                children: [
+                  NavigationRail(
+                    selectedIndex: tabs.activeIndex,
+                    onDestinationSelected: tabs.setActiveIndex,
+                    labelType: NavigationRailLabelType.all,
+                    destinations: [
+                      for (final (icon, selected, label) in destinations)
+                        NavigationRailDestination(
+                          icon: Icon(icon),
+                          selectedIcon: Icon(selected),
+                          label: Text(label),
+                        ),
+                    ],
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: _StatusFrame(demo: demo, offline: offline, child: child),
+                  ),
+                ],
+              ),
+            );
+          }
           return Scaffold(
-            body: Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: tabs.activeIndex,
-                  onDestinationSelected: tabs.setActiveIndex,
-                  labelType: NavigationRailLabelType.all,
-                  destinations: [
-                    for (final (icon, selected, label) in destinations)
-                      NavigationRailDestination(
-                        icon: Icon(icon),
-                        selectedIcon: Icon(selected),
-                        label: Text(label),
-                      ),
-                  ],
-                ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: _StatusFrame(demo: demo, offline: offline, child: child),
-                ),
+            body: _StatusFrame(demo: demo, offline: offline, child: child),
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: tabs.activeIndex,
+              onDestinationSelected: tabs.setActiveIndex,
+              destinations: [
+                for (final (icon, selected, label) in destinations)
+                  NavigationDestination(
+                    icon: Icon(icon),
+                    selectedIcon: Icon(selected),
+                    label: label,
+                  ),
               ],
             ),
           );
-        }
-        return Scaffold(
-          body: _StatusFrame(demo: demo, offline: offline, child: child),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: tabs.activeIndex,
-            onDestinationSelected: tabs.setActiveIndex,
-            destinations: [
-              for (final (icon, selected, label) in destinations)
-                NavigationDestination(icon: Icon(icon), selectedIcon: Icon(selected), label: label),
-            ],
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }

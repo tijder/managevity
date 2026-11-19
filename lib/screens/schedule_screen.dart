@@ -28,11 +28,29 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   late DateTime _day = dayOf(DateTime.now());
   String? _activity;
 
+  // The day buttons start at today. Coming back after midnight, "today" has moved on: build
+  // again so the selection moves with it.
+  late final _lifecycle = AppLifecycleListener(onResume: () => setState(() {}));
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle;
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final today = dayOf(DateTime.now());
+    // A day that has passed has no button any more; without this nothing would be selected.
+    if (_day.isBefore(today)) _day = today;
     final lessons = ref.watch(scheduleProvider(_day));
 
     Future<void> refresh() => refreshSchedule(ref, _day);

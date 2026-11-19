@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -6,6 +7,7 @@ import 'package:managevity/models/lesson.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/screens/schedule_screen.dart';
 import 'package:managevity/utils/dates.dart';
+import 'package:managevity/widgets/resume_refresh.dart';
 
 import '../fixtures/fixtures.dart';
 import 'helpers.dart';
@@ -14,6 +16,8 @@ void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
   final noon = addDays(DateTime.now(), 0, hour: 12);
+  // Still to come at whatever time the tests run (short of the last minute of the day).
+  final late = DateTime(noon.year, noon.month, noon.day, 23, 59);
 
   testWidgets("shows today's lessons with their status", (tester) async {
     final api = FakeSportivityApi(
@@ -70,6 +74,74 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Spinning 45'), findsOneWidget);
     expect(find.text('Yin yoga'), findsNothing);
+  });
+
+  testWidgets('F5 fetches the day again', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(description: 'Yin yoga', start: late)],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+    expect(find.text('Yin yoga'), findsOneWidget);
+
+    api.lessons = [lessonFixture(description: 'Spinning 45', start: late)];
+    await tester.sendKeyEvent(LogicalKeyboardKey.f5);
+    await tester.pumpAndSettle();
+    expect(find.text('Spinning 45'), findsOneWidget);
+    expect(find.text('Yin yoga'), findsNothing);
+  });
+
+  group('coming back to the app', () {
+    Future<void> leaveAndReturn(WidgetTester tester) async {
+      for (final state in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('after a while: fetched again', (tester) async {
+      final api = FakeSportivityApi(
+        lessons: [lessonFixture(description: 'Yin yoga', start: late)],
+      );
+      await tester.pumpWidget(
+        testApp(
+          const ResumeRefresh(
+            staleAfter: Duration.zero,
+            child: _WithSession(child: ScheduleScreen()),
+          ),
+          api: api,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      api.lessons = [lessonFixture(description: 'Spinning 45', start: late)];
+      await leaveAndReturn(tester);
+      expect(find.text('Spinning 45'), findsOneWidget);
+    });
+
+    testWidgets('right away: the server is left alone', (tester) async {
+      final api = FakeSportivityApi(
+        lessons: [lessonFixture(description: 'Yin yoga', start: late)],
+      );
+      await tester.pumpWidget(
+        testApp(
+          const ResumeRefresh(child: _WithSession(child: ScheduleScreen())),
+          api: api,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final calls = api.scheduleCalls.length;
+
+      api.lessons = [lessonFixture(description: 'Spinning 45', start: late)];
+      await leaveAndReturn(tester);
+      expect(find.text('Yin yoga'), findsOneWidget);
+      expect(api.scheduleCalls, hasLength(calls));
+    });
   });
 
   testWidgets('empty day', (tester) async {
