@@ -1,3 +1,5 @@
+import 'package:clock/clock.dart';
+
 import '../utils/json.dart';
 
 /// A single lesson. The API supplies the same lesson at three levels of detail (row in a
@@ -59,10 +61,10 @@ class Lesson {
 
   DateTime get start => startUtc.toLocal();
   DateTime get end => endUtc.toLocal();
-  bool get isPast => endUtc.isBefore(DateTime.now().toUtc());
+  bool get isPast => endUtc.isBefore(clock.now().toUtc());
 
   /// Under way or over: still listed, but no longer something to book or cancel.
-  bool get hasStarted => startUtc.isBefore(DateTime.now().toUtc());
+  bool get hasStarted => startUtc.isBefore(clock.now().toUtc());
 
   /// Spots still free; null when the maximum or the count is unknown.
   int? get spotsLeft => participants == null || maximumParticipants == null

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/customer.dart';
@@ -124,7 +125,7 @@ final offerDetailsProvider = FutureProvider.autoDispose
       final api = ref.watch(apiProvider);
       final locationId = ref.watch(locationIdProvider);
       final offer = MembershipOffer(id: key.id, description: '', promotion: key.promotion);
-      final now = DateTime.now();
+      final now = clock.now();
       final today = DateTime(now.year, now.month, now.day);
       final (costs, conditions, addons) = await (
         api.firstCosts(locationId, key.language, offer, start: today),

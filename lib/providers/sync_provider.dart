@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -195,7 +196,7 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
         );
         return null;
       }
-      final now = DateTime.now();
+      final now = clock.now();
       // Without an address or coordinates the event is barer, but the sync carries on.
       final venue = await ref.read(venueProvider.future).catchError((_) => const Venue());
       final reminder = settings.reminderMinutes == null

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -242,7 +243,7 @@ class _AddonListState extends ConsumerState<_AddonList> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(clock.now());
     final from = await showDatePicker(
       context: context,
       helpText: l10n.addonFrom,
@@ -453,7 +454,7 @@ class _ChangeFormState extends ConsumerState<_ChangeForm> {
   @override
   void initState() {
     super.initState();
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(clock.now());
     final end = widget.membership.contractEndDate;
     // Cancelling: by default at the end of the contract, the usual moment.
     _from = widget.change == _Change.cancel && end != null && end.isAfter(today)
@@ -469,7 +470,7 @@ class _ChangeFormState extends ConsumerState<_ChangeForm> {
   }
 
   Future<DateTime?> _pick(DateTime initial, DateTime first) {
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(clock.now());
     return showDatePicker(
       context: context,
       initialDate: initial.isBefore(first) ? first : initial,
@@ -496,7 +497,7 @@ class _ChangeFormState extends ConsumerState<_ChangeForm> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final date = DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag());
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(clock.now());
     final change = widget.change;
     final reasons = ref.watch(cancellationReasonsProvider);
 

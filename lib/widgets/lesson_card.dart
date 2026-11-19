@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
@@ -57,7 +58,7 @@ class LessonCard extends StatelessWidget {
                             Text(
                               // The year only when it is not this year: otherwise "Monday 21
                               // September" cannot be placed in the history.
-                              (lesson.start.year == DateTime.now().year
+                              (lesson.start.year == clock.now().year
                                       ? DateFormat.MMMMEEEEd(locale)
                                       : DateFormat.yMMMMEEEEd(locale))
                                   .format(lesson.start),

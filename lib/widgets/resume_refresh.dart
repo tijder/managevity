@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,7 +33,7 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
     _lifecycle = AppLifecycleListener(
       // "hidden" is the one state every platform passes through on the way out, including
       // a browser tab that moves to the background.
-      onHide: () => _leftAt ??= DateTime.now(),
+      onHide: () => _leftAt ??= clock.now(),
       onResume: _resumed,
     );
   }
@@ -46,7 +47,7 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
   void _resumed() {
     final leftAt = _leftAt;
     _leftAt = null;
-    if (leftAt == null || DateTime.now().difference(leftAt) < widget.staleAfter) return;
+    if (leftAt == null || clock.now().difference(leftAt) < widget.staleAfter) return;
 
     // Whole families: whichever day is on screen fetches again, the rest is dropped.
     ref.invalidate(scheduleWeekProvider);

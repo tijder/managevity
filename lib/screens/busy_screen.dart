@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +20,7 @@ class BusyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final today = dayOf(DateTime.now());
+    final today = dayOf(clock.now());
     final day = ref.watch(heatmapDayProvider(today));
     final week = ref.watch(heatmapWeekProvider);
 
@@ -54,7 +55,7 @@ class BusyScreen extends ConsumerWidget {
                       onRetry: () => ref.invalidate(heatmapDayProvider(today)),
                       builder: (cells) => cells.isEmpty
                           ? Center(child: Text(l10n.busyEmpty))
-                          : _DayBars(cells: cells, currentHour: DateTime.now().hour),
+                          : _DayBars(cells: cells, currentHour: clock.now().hour),
                     ),
                   ),
                 ),
@@ -195,7 +196,7 @@ class _WeekGrid extends StatelessWidget {
     // The numbering of `sortday` is documented nowhere; 1 = Monday (7 = Sunday) matches
     // what the API returns.
     final names = DateFormat.E(locale).dateSymbols.STANDALONEWEEKDAYS;
-    final today = DateTime.now().weekday;
+    final today = clock.now().weekday;
 
     // Three parts of the day get a name; with any other division the number stays.
     final parts = [l10n.busyMorning, l10n.busyAfternoon, l10n.busyEvening];

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,7 +163,7 @@ class _GuestFormState extends State<_GuestForm> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _mobile = TextEditingController();
-  late DateTime _date = DateUtils.dateOnly(DateTime.now());
+  late DateTime _date = DateUtils.dateOnly(clock.now());
   String? _nameError;
 
   @override
@@ -174,7 +175,7 @@ class _GuestFormState extends State<_GuestForm> {
   }
 
   Future<void> _pickDate() async {
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = DateUtils.dateOnly(clock.now());
     final picked = await showDatePicker(
       context: context,
       initialDate: _date,

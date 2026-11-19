@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +30,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   /// How far ahead the date picker goes; a gym rarely publishes more than a few months.
   static const _pickerDays = 180;
-  late DateTime _day = dayOf(DateTime.now());
+  late DateTime _day = dayOf(clock.now());
   String? _activity;
   bool _showEarlier = false;
 
@@ -68,7 +69,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final today = dayOf(DateTime.now());
+    final today = dayOf(clock.now());
     // A day that has passed has no button any more; without this nothing would be selected.
     if (_day.isBefore(today)) _day = today;
     final lessons = ref.watch(scheduleProvider(_day));

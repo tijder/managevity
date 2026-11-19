@@ -1,3 +1,5 @@
+import 'package:clock/clock.dart';
+
 import 'calendar_sync_target.dart';
 
 const _prodId = '-//g4d.nl//Managevity//NL';
@@ -5,7 +7,7 @@ const _prodId = '-//g4d.nl//Managevity//NL';
 /// Builds a single VCALENDAR with a single VEVENT (RFC 5545). Times go out as UTC: the
 /// API supplies UTCStartTime/UTCEndTime, and this way no VTIMEZONE is needed.
 String buildIcs(CalendarEvent event, {DateTime? now}) {
-  final stamp = _utc(now ?? DateTime.now());
+  final stamp = _utc(now ?? clock.now());
   final lines = <String>[
     'BEGIN:VCALENDAR',
     'VERSION:2.0',

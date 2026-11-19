@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:clock/clock.dart';
 import 'package:dio/dio.dart';
 
 import '../utils/dates.dart';
@@ -291,7 +292,7 @@ class DemoServer implements HttpClientAdapter {
   /// The lunchtime class is always full, so the waiting list can be tried.
   static const _fullSlot = 2;
 
-  DateTime _today() => dayOf(DateTime.now());
+  DateTime _today() => dayOf(clock.now());
 
   int _dayNumber(DateTime day) =>
       DateTime.utc(day.year, day.month, day.day).difference(DateTime.utc(2024)).inDays;

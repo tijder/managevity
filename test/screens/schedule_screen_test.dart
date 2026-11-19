@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' as flutter_test;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:managevity/models/lesson.dart';
@@ -16,11 +18,14 @@ import 'helpers.dart';
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
-  final noon = addDays(DateTime.now(), 0, hour: 12);
-  // Already started at whatever time the tests run (short of the first minute of the day).
-  final early = DateTime(noon.year, noon.month, noon.day);
-  // Still to come at whatever time the tests run (short of the last minute of the day).
-  final late = DateTime(noon.year, noon.month, noon.day, 23, 59);
+  // A fixed moment: what counts as "earlier today" must not depend on when the tests run.
+  final now = DateTime(2026, 10, 14, 13, 30);
+  final early = DateTime(2026, 10, 14, 9);
+  final late = DateTime(2026, 10, 14, 19);
+  final noon = DateTime(2026, 10, 14, 12);
+
+  void testWidgets(String description, Future<void> Function(WidgetTester) body) =>
+      flutter_test.testWidgets(description, (t) => withClock(Clock.fixed(now), () => body(t)));
 
   testWidgets("shows today's lessons with their status", (tester) async {
     final api = FakeSportivityApi(
@@ -177,7 +182,7 @@ void main() {
   testWidgets('a date beyond the buttons can be picked, and the picker then shows it', (
     tester,
   ) async {
-    final far = addDays(DateTime.now(), 20, hour: 19);
+    final far = addDays(now, 20, hour: 19);
     final api = FakeSportivityApi(
       lessons: [lessonFixture(description: 'Far away', start: far)],
     );

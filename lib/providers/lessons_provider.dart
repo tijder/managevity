@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -169,7 +170,7 @@ class BookedLessonsFetcher {
 
   /// Fetches, stores and returns; throws if the list itself cannot be fetched.
   Future<List<Lesson>> fetch(int locationId) async {
-    final from = dayOf(DateTime.now());
+    final from = dayOf(clock.now());
     final thin = await _api.bookedLessons(locationId, from, addDays(from, kBookedDays));
     final lessons = await _withDetails(thin);
     await _cache.saveLessons(cacheKey(locationId), lessons);
@@ -187,7 +188,7 @@ class BookedLessonsFetcher {
   /// lesson has been rescheduled. If fetching fails, the thin version stays.
   Future<List<Lesson>> _withDetails(List<Lesson> thin) async {
     final known = await _cache.loadDetails();
-    final now = DateTime.now();
+    final now = clock.now();
 
     bool fresh(Lesson lesson) {
       final hit = known[lesson.id];
@@ -306,7 +307,7 @@ final lessonHistoryProvider = FutureProvider.autoDispose<List<Lesson>>((ref) asy
   final api = ref.watch(apiProvider);
   ref.watch(cacheServiceProvider);
   final locationId = ref.watch(locationIdProvider);
-  final today = dayOf(DateTime.now());
+  final today = dayOf(clock.now());
   return _fetchOrCached(
     ref,
     'history:$locationId',
@@ -347,7 +348,7 @@ class PastLessonDetails {
   Future<Lesson?> _fetch(Map<int, CachedLesson> known, int lessonId) async {
     try {
       final lesson = await _api.lesson(lessonId);
-      known[lessonId] = (lesson: lesson, fetchedAt: DateTime.now());
+      known[lessonId] = (lesson: lesson, fetchedAt: clock.now());
       await _cache.saveDetails(known, key: _key);
       return lesson;
     } on Exception {
