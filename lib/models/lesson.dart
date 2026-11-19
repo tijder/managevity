@@ -28,6 +28,8 @@ class Lesson {
     this.amount,
     this.warning,
     this.thirdPartyId,
+    this.gymStart,
+    this.gymEnd,
   });
 
   final int id;
@@ -59,8 +61,46 @@ class Lesson {
   final String? warning;
   final String? thirdPartyId;
 
-  DateTime get start => startUtc.toLocal();
-  DateTime get end => endUtc.toLocal();
+  /// Start and end on the gym's own clock (`LessonStartTime`), as wall-clock values: the
+  /// lists carry them, a single lesson does not. Null when the server did not send them.
+  final DateTime? gymStart;
+  final DateTime? gymEnd;
+
+  /// When the lesson is, to show and to sort into days: on the gym's clock when the server
+  /// said what that reads, otherwise on this device's. They only differ for someone who is
+  /// in another time zone than their gym — who should still read "19:00", the time on the
+  /// wall there. Anything about *now* (is it over, the calendar) uses the UTC instants.
+  DateTime get start => gymStart ?? startUtc.toLocal();
+  DateTime get end => gymEnd ?? endUtc.toLocal();
+
+  /// This lesson with the gym's clock times of [other], when that is the same lesson at
+  /// the same moment: for the detailed variant, which lacks them.
+  Lesson keepingGymTimeOf(Lesson? other) =>
+      gymStart == null && other?.gymStart != null && other!.startUtc == startUtc
+      ? copyWith(gymStart: other.gymStart, gymEnd: other.gymEnd)
+      : this;
+
+  /// A wall-clock time from the server, accepted only if it can be the same instant as
+  /// [utc] in some time zone (whole quarters, at most fourteen hours off).
+  static DateTime? _wallTime(Object? value, DateTime utc) {
+    final wall = asDateTime(value);
+    if (wall == null || wall.isUtc) return null;
+    final offset = DateTime.utc(
+      wall.year,
+      wall.month,
+      wall.day,
+      wall.hour,
+      wall.minute,
+      wall.second,
+    ).difference(utc);
+    return offset.inMinutes.abs() <= 14 * 60 && offset.inSeconds % 900 == 0 ? wall : null;
+  }
+
+  static String _wallText(DateTime d) {
+    String p(int v) => v.toString().padLeft(2, '0');
+    return '${d.year}-${p(d.month)}-${p(d.day)} ${p(d.hour)}:${p(d.minute)}:${p(d.second)}';
+  }
+
   bool get isPast => endUtc.isBefore(clock.now().toUtc());
 
   /// Under way or over: still listed, but no longer something to book or cancel.
@@ -103,6 +143,8 @@ class Lesson {
       amount: asString(json['AmountAsString']) ?? asString(json['AmountString']),
       warning: json['Warning'] is String ? asString(json['Warning']) : null,
       thirdPartyId: asString(json['ThirdPartyId']),
+      gymStart: _wallTime(json['LessonStartTime'], start),
+      gymEnd: _wallTime(json['LessonEndTime'], end),
     );
   }
 
@@ -129,9 +171,17 @@ class Lesson {
     'AmountAsString': amount,
     'Warning': warning,
     'ThirdPartyId': thirdPartyId,
+    'LessonStartTime': gymStart == null ? null : _wallText(gymStart!),
+    'LessonEndTime': gymEnd == null ? null : _wallText(gymEnd!),
   };
 
-  Lesson copyWith({BookingStatus? bookingStatus, bool? liked, int? participants}) => Lesson(
+  Lesson copyWith({
+    BookingStatus? bookingStatus,
+    bool? liked,
+    int? participants,
+    DateTime? gymStart,
+    DateTime? gymEnd,
+  }) => Lesson(
     id: id,
     description: description,
     startUtc: startUtc,
@@ -154,6 +204,8 @@ class Lesson {
     amount: amount,
     warning: warning,
     thirdPartyId: thirdPartyId,
+    gymStart: gymStart ?? this.gymStart,
+    gymEnd: gymEnd ?? this.gymEnd,
   );
 }
 

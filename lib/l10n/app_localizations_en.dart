@@ -261,9 +261,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileMobile => 'Mobile';
 
   @override
-  String get profileEmail => 'Email';
-
-  @override
   String get profileBalance => 'Balance';
 
   @override
@@ -293,12 +290,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get membershipReadOnly =>
       'Freezing, cancelling and withdrawing are requests to your gym; it confirms them. Taking out or converting a membership goes through your gym.';
-
-  @override
-  String get addonOn => 'On';
-
-  @override
-  String get addonOff => 'Off';
 
   @override
   String get syncTarget => 'Sync to';
@@ -493,9 +484,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreSectionApp => 'App';
 
   @override
-  String get lessonWhen => 'When';
-
-  @override
   String get lessonParticipants => 'Participants';
 
   @override
@@ -577,9 +565,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get photoGallery => 'Choose from gallery';
-
-  @override
-  String get photoFile => 'Choose a file';
 
   @override
   String get photoConfirmTitle => 'Use this photo?';

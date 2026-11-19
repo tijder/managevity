@@ -135,7 +135,8 @@ class _PastLessonCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(pastLessonProvider(lesson.id)).value;
     // The times and the status remain those from the list; the details only fill in.
-    final shown = details?.copyWith(bookingStatus: lesson.bookingStatus) ?? lesson;
+    final shown =
+        details?.copyWith(bookingStatus: lesson.bookingStatus).keepingGymTimeOf(lesson) ?? lesson;
     return LessonCard(lesson: shown, showDate: true, onTap: () => openLesson(context, ref, shown));
   }
 }

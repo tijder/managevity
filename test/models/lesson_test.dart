@@ -99,4 +99,37 @@ void main() {
       expect((lesson.participants, lesson.spotsLeft, lesson.isFull), (3, null, false));
     });
   });
+
+  group("the gym's own clock", () {
+    Lesson parse(Object? local) => Lesson.tryFromJson({
+      'LessonId': 1,
+      'Description': 'Yoga',
+      'UTCStartTime': '2026-09-22T17:00:00.000Z',
+      'UTCEndTime': '2026-09-22T18:00:00.000Z',
+      'LessonStartTime': local,
+      'LessonEndTime': '2026-09-22 20:00:00',
+    })!;
+
+    test('is what the lesson shows, wherever the device is', () {
+      // 19:00 on the wall of the gym, whatever TZ these tests run in.
+      final lesson = parse('2026-09-22 19:00:00');
+      expect(lesson.start.hour, 19);
+      expect(lesson.start.day, 22);
+      expect(lesson.end.hour, 20);
+      // And it survives the offline cache.
+      expect(Lesson.tryFromJson(lesson.toJson())!.start.hour, 19);
+    });
+
+    test('is ignored when it cannot be the same moment, or is missing', () {
+      expect(parse('2026-09-25 19:00:00').start, DateTime.utc(2026, 9, 22, 17).toLocal());
+      expect(parse('2026-09-22 19:07:00').start, DateTime.utc(2026, 9, 22, 17).toLocal());
+      expect(parse(null).start, DateTime.utc(2026, 9, 22, 17).toLocal());
+    });
+
+    test('is handed on to the detailed lesson, which comes without it', () {
+      final fromList = parse('2026-09-22 19:00:00');
+      final detailed = parse(null);
+      expect(detailed.keepingGymTimeOf(fromList).start.hour, 19);
+    });
+  });
 }

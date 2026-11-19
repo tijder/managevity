@@ -219,7 +219,10 @@ class BookedLessonsFetcher {
 
     return [
       for (final lesson in thin)
-        known[lesson.id]?.lesson.copyWith(bookingStatus: lesson.bookingStatus) ?? lesson,
+        known[lesson.id]?.lesson
+                .copyWith(bookingStatus: lesson.bookingStatus)
+                .keepingGymTimeOf(lesson) ??
+            lesson,
     ];
   }
 }
@@ -394,7 +397,8 @@ final lessonProvider = FutureProvider.autoDispose.family<Lesson, int>((ref, id) 
   try {
     final lesson = await api.lesson(id);
     ref.read(offlineProvider.notifier).report(offline: false);
-    return lesson;
+    // A single lesson comes without the gym's clock times; the list it was tapped in had them.
+    return lesson.keepingGymTimeOf(ref.read(lessonPreviewsProvider)[id]);
   } on SportivityException catch (e) {
     if (!e.isUnreachable) rethrow;
     final known =

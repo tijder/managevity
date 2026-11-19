@@ -261,9 +261,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get profileMobile => 'Mobiel';
 
   @override
-  String get profileEmail => 'E-mail';
-
-  @override
   String get profileBalance => 'Saldo';
 
   @override
@@ -293,12 +290,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get membershipReadOnly =>
       'Bevriezen, opzeggen en herroepen zijn verzoeken aan je sportschool; die bevestigt ze. Een abonnement afsluiten of omzetten gaat via je sportschool.';
-
-  @override
-  String get addonOn => 'Aan';
-
-  @override
-  String get addonOff => 'Uit';
 
   @override
   String get syncTarget => 'Synchroniseren naar';
@@ -493,9 +484,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get moreSectionApp => 'App';
 
   @override
-  String get lessonWhen => 'Wanneer';
-
-  @override
   String get lessonParticipants => 'Deelnemers';
 
   @override
@@ -577,9 +565,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get photoGallery => 'Kiezen uit galerij';
-
-  @override
-  String get photoFile => 'Bestand kiezen';
 
   @override
   String get photoConfirmTitle => 'Deze foto gebruiken?';

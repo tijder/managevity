@@ -573,12 +573,6 @@ abstract class AppLocalizations {
   /// **'Mobile'**
   String get profileMobile;
 
-  /// No description provided for @profileEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'Email'**
-  String get profileEmail;
-
   /// No description provided for @profileBalance.
   ///
   /// In en, this message translates to:
@@ -638,18 +632,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Freezing, cancelling and withdrawing are requests to your gym; it confirms them. Taking out or converting a membership goes through your gym.'**
   String get membershipReadOnly;
-
-  /// No description provided for @addonOn.
-  ///
-  /// In en, this message translates to:
-  /// **'On'**
-  String get addonOn;
-
-  /// No description provided for @addonOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get addonOff;
 
   /// No description provided for @syncTarget.
   ///
@@ -969,12 +951,6 @@ abstract class AppLocalizations {
   /// **'App'**
   String get moreSectionApp;
 
-  /// No description provided for @lessonWhen.
-  ///
-  /// In en, this message translates to:
-  /// **'When'**
-  String get lessonWhen;
-
   /// No description provided for @lessonParticipants.
   ///
   /// In en, this message translates to:
@@ -1124,12 +1100,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose from gallery'**
   String get photoGallery;
-
-  /// No description provided for @photoFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose a file'**
-  String get photoFile;
 
   /// No description provided for @photoConfirmTitle.
   ///
