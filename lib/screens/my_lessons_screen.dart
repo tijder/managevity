@@ -54,18 +54,31 @@ class _MyLessonsScreenState extends ConsumerState<MyLessonsScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<bool>(
-                segments: [
-                  ButtonSegment(value: false, label: Text(l10n.myLessonsUpcoming)),
-                  ButtonSegment(value: true, label: Text(l10n.myLessonsHistory)),
-                ],
-                selected: {_history},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() => _history = s.single),
+          // In the same column as the cards below, and no wider than it needs to be: across
+          // a desktop window two segments of 600 pixels each are not a switch any more.
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<bool>(
+                        segments: [
+                          ButtonSegment(value: false, label: Text(l10n.myLessonsUpcoming)),
+                          ButtonSegment(value: true, label: Text(l10n.myLessonsHistory)),
+                        ],
+                        selected: {_history},
+                        showSelectedIcon: false,
+                        onSelectionChanged: (s) => setState(() => _history = s.single),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -77,20 +90,31 @@ class _MyLessonsScreenState extends ConsumerState<MyLessonsScreen> {
                 placeholder: placeholderLessons,
                 onRetry: () =>
                     ref.invalidate(_history ? lessonHistoryProvider : bookedLessonsProvider),
-                builder: (lessons) => lessons.isEmpty
-                    ? EmptyView(_history ? l10n.myLessonsHistoryEmpty : l10n.myLessonsEmpty)
-                    // Lazy: in the history every card fetches who taught the lesson itself,
-                    // and that should only happen for what is in view.
-                    : LazyCardGrid(
-                        itemCount: lessons.length,
-                        itemBuilder: (context, i) => _history
-                            ? _PastLessonCard(lesson: lessons[i])
-                            : LessonCard(
-                                lesson: lessons[i],
-                                showDate: true,
-                                onTap: () => openLesson(context, ref, lessons[i]),
-                              ),
-                      ),
+                builder: (all) {
+                  // The booked list starts at midnight (the calendar sync wants the whole
+                  // day), but this morning's lesson is not "upcoming" tonight: it is in the
+                  // history.
+                  final lessons = _history
+                      ? all
+                      : [
+                          for (final l in all)
+                            if (!l.isPast) l,
+                        ];
+                  return lessons.isEmpty
+                      ? EmptyView(_history ? l10n.myLessonsHistoryEmpty : l10n.myLessonsEmpty)
+                      // Lazy: in the history every card fetches who taught the lesson itself,
+                      // and that should only happen for what is in view.
+                      : LazyCardGrid(
+                          itemCount: lessons.length,
+                          itemBuilder: (context, i) => _history
+                              ? _PastLessonCard(lesson: lessons[i])
+                              : LessonCard(
+                                  lesson: lessons[i],
+                                  showDate: true,
+                                  onTap: () => openLesson(context, ref, lessons[i]),
+                                ),
+                        );
+                },
               ),
             ),
           ),
