@@ -68,7 +68,7 @@ password is never stored.
 
 | | |
 |---|---|
-| Flutter | see `environment.flutter` in `pubspec.yaml` |
+| Flutter | `.flutter-version` (what CI builds with); `pubspec.yaml` only sets the minimum |
 | State | Riverpod |
 | Routing | auto_route |
 | HTTP | dio |

@@ -1,12 +1,19 @@
 name: Setup Flutter
-description: Flutter from pubspec.yaml, pub cache and dependencies — shared by all jobs.
+description: Flutter from .flutter-version, pub cache and dependencies — shared by all jobs.
 runs:
   using: composite
   steps:
+    # pubspec.yaml only sets a lower bound, so a newer SDK on a developer's machine still
+    # resolves; the version CI builds with is pinned here.
+    - name: Read Flutter version
+      id: version
+      shell: bash
+      run: echo "flutter=$(tr -d '[:space:]' < .flutter-version)" >> "$GITHUB_OUTPUT"
+
     - uses: subosito/flutter-action@v2
       with:
         channel: stable
-        flutter-version-file: pubspec.yaml
+        flutter-version: ${{ steps.version.outputs.flutter }}
         # Caches the SDK download (~1 min per run).
         cache: true
 
