@@ -7,14 +7,14 @@ version: 0.1.0+1
 environment:
   sdk: ^3.13.0
   # The exact version CI builds with is in .flutter-version.
-  flutter: ">=3.47.8"
+  flutter: ">=3.50.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
   cupertino_icons: ^2.0.0
-  flutter_riverpod: ^3.4.3
+  flutter_riverpod: ^3.5.0
   dio: ^5.11.1
   hive_ce_flutter: ^2.5.0
   auto_route: ^11.2.0
@@ -35,6 +35,8 @@ dependencies:
   skeletonizer: ^3.0.0
   web: ^1.1.2
   image_picker: ^1.2.4
+  cupertino_ui: ^1.1.7
+  material_ui: ^1.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

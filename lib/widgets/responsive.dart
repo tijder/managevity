@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// From this width on a screen counts as "wide" (navigation rail, grids, two columns).
 const kWideBreakpoint = 720.0;

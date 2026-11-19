@@ -22,6 +22,9 @@ dart run tool/probe.dart                                  # real API, GETs only;
 flutter test --tags golden --update-goldens test/screenshots/screenshots_test.dart
 ```
 
+Material widgets are imported from `package:material_ui/material_ui.dart` (and
+`cupertino_ui`), not `package:flutter/material.dart`: that one is deprecated since Flutter 3.50.
+
 Generated files (`app_localizations*.dart`, `app_router.gr.dart`) are committed;
 the CI job `test` fails when they are out of date.
 

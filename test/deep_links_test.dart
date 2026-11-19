@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:material_ui/material_ui.dart';
+// Material and Cupertino localizations now come from their own packages.
+import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';

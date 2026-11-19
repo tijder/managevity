@@ -55,7 +55,7 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
     ref.invalidate(heatmapWeekProvider);
     // Not invalidated but refreshed: the calendar should follow, and a failure must leave
     // the list that is there alone.
-    if (ref.exists(bookedLessonsProvider)) {
+    if (ref.read(bookedLessonsProvider.exists)) {
       ref
           .read(bookedLessonsProvider.notifier)
           .refreshAndSync()

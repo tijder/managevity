@@ -103,7 +103,7 @@ final scheduleProvider = FutureProvider.autoDispose.family<List<Lesson>, DateTim
   // the week has to invalidate the day as well (see [refreshSchedule]).
   final weekProvider = scheduleWeekProvider(monday);
   List<Lesson>? week;
-  if (ref.exists(weekProvider)) {
+  if (ref.read(weekProvider.exists)) {
     final state = ref.read(weekProvider);
     if (!state.isLoading) {
       week = state.value;
