@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../l10n/l10n.dart';
+import '../models/sync_settings.dart';
 import '../services/calendar/calendar_sync_target.dart';
 import '../services/sportivity_api.dart';
 
@@ -63,3 +64,56 @@ String _text(AppLocalizations l10n, AppError code, int? status) => switch (code)
   AppError.calendarNotFound => l10n.errorCalendarNotFound,
   AppError.calendarFailed => l10n.errorCalendarFailed(status ?? 0),
 };
+
+/// What went wrong in a sync, as data to keep (see [SyncError]). [lesson] names the lesson
+/// being written; [removing] says an event could not be removed.
+SyncError syncErrorOf(Object error, {String? lesson, bool removing = false}) => switch (error) {
+  SportivityException(:final code, :final serverMessage, :final statusCode) => SyncError(
+    source: SyncErrorSource.api,
+    code: code,
+    status: statusCode,
+    detail: serverMessage,
+    lesson: lesson,
+    removing: removing,
+  ),
+  CalendarSyncException(:final code, :final statusCode, :final detail) => SyncError(
+    source: SyncErrorSource.calendar,
+    code: code,
+    status: statusCode,
+    detail: detail,
+    lesson: lesson,
+    removing: removing,
+  ),
+  _ => _unexpectedSync(error, lesson, removing),
+};
+
+SyncError _unexpectedSync(Object error, String? lesson, bool removing) {
+  debugPrint('[sync] unexpected: $error');
+  return SyncError(lesson: lesson, removing: removing);
+}
+
+/// A stored sync error in the language of whoever is looking at it now.
+String describeSyncError(AppLocalizations l10n, SyncError error) {
+  if (error.legacyText case final text?) return text;
+  final reason = switch (error.source) {
+    SyncErrorSource.api => describeError(
+      l10n,
+      SportivityException(
+        error.code ?? AppError.requestFailed,
+        serverMessage: error.detail,
+        statusCode: error.status,
+      ),
+    ),
+    SyncErrorSource.calendar => describeError(
+      l10n,
+      CalendarSyncException(
+        error.code ?? AppError.calendarFailed,
+        statusCode: error.status,
+        detail: error.detail,
+      ),
+    ),
+    SyncErrorSource.unexpected => l10n.errorUnexpected,
+  };
+  if (error.lesson == null && !error.removing) return reason;
+  return l10n.syncFailedFor(error.lesson ?? l10n.syncRemoveFailed, reason);
+}

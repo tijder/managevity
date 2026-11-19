@@ -6,6 +6,7 @@ import '../l10n/l10n.dart';
 import '../providers/content_providers.dart';
 import '../providers/services.dart';
 import '../providers/session_provider.dart';
+import '../providers/sync_provider.dart';
 import '../router/app_router.dart';
 import '../widgets/confirm_action.dart';
 import '../widgets/customer_avatar.dart';
@@ -25,6 +26,8 @@ class MoreScreen extends ConsumerWidget {
     final router = context.router.root;
     final buttons = ref.watch(gymButtonsProvider).value ?? const [];
     final logo = ref.watch(gymLogoProvider).value;
+    final sync = ref.watch(syncProvider).value;
+    final syncFailing = sync != null && sync.enabled && sync.lastError != null;
 
     Widget item(IconData icon, String title, PageRouteInfo route, {String? subtitle}) => ListTile(
       leading: Icon(icon),
@@ -90,7 +93,18 @@ class MoreScreen extends ConsumerWidget {
           ),
           SectionTitle(l10n.moreSectionLessons),
           group([
-            item(Icons.sync, l10n.moreSync, const SyncSettingsRoute()),
+            // A sync that fails does so out of sight (after a booking, in the background):
+            // say it here, where it is passed on the way to anything else.
+            if (syncFailing)
+              ListTile(
+                leading: Icon(Icons.sync_problem, color: scheme.error),
+                title: Text(l10n.moreSync),
+                subtitle: Text(l10n.syncFailing, style: TextStyle(color: scheme.error)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => router.push(const SyncSettingsRoute()),
+              )
+            else
+              item(Icons.sync, l10n.moreSync, const SyncSettingsRoute()),
             item(Icons.favorite_border, l10n.moreFavourites, const FavouritesRoute()),
           ]),
           SectionTitle(l10n.moreSectionGym),

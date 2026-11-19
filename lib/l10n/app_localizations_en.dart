@@ -225,7 +225,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutConfirmBody =>
-      'Your stored password and the offline copy of your lessons are removed from this device. Events that are already in your calendar stay there.';
+      'Your stored password and the offline copy of your lessons are removed from this device. Calendar sync is switched off; events that are already in your calendar stay there.';
 
   @override
   String get moreAbout => 'About this app';
@@ -359,6 +359,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncExplain =>
       'One way: your booked lessons appear in the calendar and disappear when cancelled. The app only touches events it created itself.';
+
+  @override
+  String get syncDemoNote => 'The demo does not write to your calendar.';
+
+  @override
+  String get syncFailing => 'The last sync failed';
 
   @override
   String get syncWebNeedsProxy =>

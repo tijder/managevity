@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:managevity/l10n/l10n.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/models/sync_settings.dart';
@@ -160,7 +163,10 @@ void main() {
       await container.read(sessionProvider.future);
       await container.read(bookedLessonsProvider.notifier).refreshAndSync();
 
-      final message = settings.sync.lastError!;
+      final message = describeSyncError(
+        lookupAppLocalizations(const Locale('en')),
+        settings.sync.lastError!,
+      );
       expect(message, startsWith('Yoga: '));
       expect(message, isNot(contains('Exception')));
       expect(message, isNot(contains('verwijderen')));

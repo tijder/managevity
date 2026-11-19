@@ -504,7 +504,7 @@ abstract class AppLocalizations {
   /// No description provided for @logoutConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Your stored password and the offline copy of your lessons are removed from this device. Events that are already in your calendar stay there.'**
+  /// **'Your stored password and the offline copy of your lessons are removed from this device. Calendar sync is switched off; events that are already in your calendar stay there.'**
   String get logoutConfirmBody;
 
   /// No description provided for @moreAbout.
@@ -764,6 +764,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'One way: your booked lessons appear in the calendar and disappear when cancelled. The app only touches events it created itself.'**
   String get syncExplain;
+
+  /// No description provided for @syncDemoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The demo does not write to your calendar.'**
+  String get syncDemoNote;
+
+  /// No description provided for @syncFailing.
+  ///
+  /// In en, this message translates to:
+  /// **'The last sync failed'**
+  String get syncFailing;
 
   /// No description provided for @syncWebNeedsProxy.
   ///

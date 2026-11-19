@@ -114,14 +114,6 @@ final syncTargetFactoryProvider = Provider<SyncTargetFactory>((ref) {
   };
 });
 
-String _describeFailure(SyncFailure failure) {
-  final l10n = _eventL10n();
-  return l10n.syncFailedFor(
-    failure.lessonTitle ?? l10n.syncRemoveFailed,
-    describeError(l10n, failure.error),
-  );
-}
-
 class SyncNotifier extends AsyncNotifier<SyncSettings> {
   /// The sync loop in progress, if any; see [run].
   Future<SyncResult?>? _loop;
@@ -184,7 +176,23 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
     return result;
   }
 
+  /// Runs [action] under the lock that keeps the app and the background task from writing
+  /// at the same time. null: the other one kept the lock for as long as we were prepared
+  /// to wait.
+  Future<T?> _locked<T>(Future<T> Function() action) async {
+    final lock = ref.read(syncLockProvider);
+    var result = await lock(action);
+    for (var i = 0; result == null && i < _lockRetries && ref.mounted; i++) {
+      await Future<void>.delayed(lockRetryDelay);
+      result = await lock(action);
+    }
+    return result;
+  }
+
   Future<SyncResult?> _runOnce(List<Lesson> booked) async {
+    // The demo's lessons are made up: they must never end up in a real calendar, nor
+    // remove the real lessons that are in it.
+    if (ref.read(apiProvider).isDemo) return null;
     final settings = await future;
     if (settings.scope == null) return null;
     try {
@@ -192,7 +200,12 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
       if (target == null) {
         await _record(
           settings,
-          (s) => s.copyWith(lastError: _eventL10n().errorCalendarUnavailable),
+          (s) => s.copyWith(
+            lastError: const SyncError(
+              source: SyncErrorSource.calendar,
+              code: AppError.calendarUnavailable,
+            ),
+          ),
         );
         return null;
       }
@@ -203,51 +216,106 @@ class SyncNotifier extends AsyncNotifier<SyncSettings> {
           ? null
           : Duration(minutes: settings.reminderMinutes!);
       final engine = SyncEngine(target: target, store: ref.read(syncIndexStoreProvider));
-      Future<SyncResult> sync() => engine.sync(
-        calendarId: settings.calendarId!,
-        booked: {for (final l in booked) l.id: eventForLesson(l, venue: venue, reminder: reminder)},
-        windowStart: DateTime(now.year, now.month, now.day).toUtc(),
+      // null: the other isolate is busy. Its list may predate a booking made here, so wait
+      // for it and then write ours.
+      final result = await _locked(
+        () => engine.sync(
+          calendarId: settings.calendarId!,
+          booked: {
+            for (final l in booked) l.id: eventForLesson(l, venue: venue, reminder: reminder),
+          },
+          windowStart: DateTime(now.year, now.month, now.day).toUtc(),
+        ),
       );
-      // Across isolates: the background task and the app must not write at the same time.
-      // null: the other one is busy. Its list may predate a booking made here, so wait for
-      // it and then write ours.
-      final lock = ref.read(syncLockProvider);
-      var result = await lock(sync);
-      for (var i = 0; result == null && i < _lockRetries && ref.mounted; i++) {
-        await Future<void>.delayed(lockRetryDelay);
-        result = await lock(sync);
-      }
       if (result == null) return null;
-      await _record(
-        settings,
-        (s) => result!.ok
-            ? s.copyWith(lastRun: now, clearError: true)
-            : s.copyWith(lastRun: now, lastError: _describeFailure(result.errors.first)),
-      );
+      await _record(settings, (s) {
+        if (result.ok) return s.copyWith(lastRun: now, clearError: true);
+        final first = result.errors.first;
+        return s.copyWith(
+          lastRun: now,
+          lastError: syncErrorOf(
+            first.error,
+            lesson: first.lessonTitle,
+            removing: first.lessonTitle == null,
+          ),
+        );
+      });
+      await _cleanLeftovers();
       return result;
     } on Exception catch (e) {
-      await _record(settings, (s) => s.copyWith(lastError: describeError(_eventL10n(), e)));
+      await _record(settings, (s) => s.copyWith(lastError: syncErrorOf(e)));
       return null;
     }
   }
 
-  /// Chooses a different target. Whatever was written to the old target is removed from
-  /// it first — otherwise lessons are left behind that nobody updates any more.
-  Future<void> choose(SyncTargetKind kind, {CalendarInfo? calendar}) async {
-    final old = await future;
-    if (old.enabled && (old.kind != kind || old.calendarId != calendar?.id)) {
-      final target = await ref.read(syncTargetFactoryProvider)(old.kind);
-      if (target != null) {
-        final engine = SyncEngine(target: target, store: ref.read(syncIndexStoreProvider));
-        await ref.read(syncLockProvider)(() => engine.removeAll(old.calendarId!));
+  /// Removes everything the app wrote to the calendar of [scope]. False when something is
+  /// still there: no target any more, no connection, or the lock was not ours to have.
+  Future<bool> _removeAll(SyncTargetKind kind, String calendarId) async {
+    try {
+      final target = await ref.read(syncTargetFactoryProvider)(kind);
+      if (target == null) return false;
+      final engine = SyncEngine(target: target, store: ref.read(syncIndexStoreProvider));
+      final result = await _locked(() => engine.removeAll(calendarId));
+      return result != null && result.ok;
+    } on Exception catch (e) {
+      debugPrint('[sync] clearing $calendarId failed: $e');
+      return false;
+    }
+  }
+
+  /// Tries the calendars that could not be emptied when the sync moved away from them.
+  /// One whose remaining lessons are all in the past is let go: those events stay anyway.
+  Future<void> _cleanLeftovers() async {
+    final leftovers = (await ref.read(settingsServiceProvider).getSync()).leftovers;
+    if (leftovers.isEmpty) return;
+    final store = ref.read(syncIndexStoreProvider);
+    final nowUtc = clock.now().toUtc();
+    final done = <String>{};
+    for (final scope in leftovers) {
+      final parsed = SyncSettings.parseScope(scope);
+      if (parsed == null) {
+        done.add(scope);
+        continue;
+      }
+      final (kind, calendarId) = parsed;
+      final index = await store.load(calendarId);
+      if (index.values.every((e) => e.startUtc.isBefore(nowUtc))) {
+        await store.save(calendarId, {});
+        done.add(scope);
+      } else if (await _removeAll(kind, calendarId)) {
+        done.add(scope);
       }
     }
+    if (done.isEmpty) return;
     await _update(
-      (_) => SyncSettings(
-        kind: calendar == null ? SyncTargetKind.off : kind,
-        calendarId: calendar?.id,
-        calendarName: calendar?.name,
+      (s) => s.copyWith(
+        leftovers: [
+          for (final l in s.leftovers)
+            if (!done.contains(l)) l,
+        ],
       ),
+    );
+  }
+
+  /// Chooses a different target. Whatever was written to the old target is removed from
+  /// it first — otherwise lessons are left behind that nobody updates any more. When that
+  /// cannot be done right now (no connection, the background task is writing), the switch
+  /// goes ahead and the old calendar is remembered in [SyncSettings.leftovers], to be
+  /// emptied after a later sync: being stuck on a calendar that is gone would be worse.
+  Future<void> choose(SyncTargetKind kind, {CalendarInfo? calendar}) async {
+    final old = await future;
+    final next = SyncSettings(
+      kind: calendar == null ? SyncTargetKind.off : kind,
+      calendarId: calendar?.id,
+      calendarName: calendar?.name,
+    );
+    var leftovers = old.leftovers;
+    if (old.enabled && old.scope != next.scope) {
+      if (!await _removeAll(old.kind, old.calendarId!)) leftovers = [...leftovers, old.scope!];
+    }
+    await _update(
+      // A calendar that is in use again is no leftover: the sync itself looks after it.
+      (_) => next.copyWith(leftovers: {...leftovers}.where((s) => s != next.scope).toList()),
     );
   }
 

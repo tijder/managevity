@@ -225,7 +225,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get logoutConfirmBody =>
-      'Je opgeslagen wachtwoord en de offline kopie van je lessen worden van dit apparaat verwijderd. Afspraken die al in je agenda staan, blijven staan.';
+      'Je opgeslagen wachtwoord en de offline kopie van je lessen worden van dit apparaat verwijderd. De agenda-sync gaat uit; afspraken die al in je agenda staan, blijven staan.';
 
   @override
   String get moreAbout => 'Over deze app';
@@ -359,6 +359,12 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get syncExplain =>
       'Eenrichting: je geboekte lessen komen in de agenda en verdwijnen bij annuleren. De app raakt alleen afspraken aan die hij zelf heeft gemaakt.';
+
+  @override
+  String get syncDemoNote => 'De demo schrijft niet naar je agenda.';
+
+  @override
+  String get syncFailing => 'De laatste sync is mislukt';
 
   @override
   String get syncWebNeedsProxy =>

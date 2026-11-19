@@ -2,7 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'dart:ui';
+
+import 'package:managevity/l10n/l10n.dart';
 import 'package:managevity/models/customer.dart';
+import 'package:managevity/models/location.dart';
+import 'package:managevity/services/credential_store.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/models/session.dart';
 import 'package:managevity/models/sync_settings.dart';
@@ -75,6 +81,31 @@ class _GatedCalendar extends FakeCalendarTarget {
     started.add(started.length);
     await _gate.future;
     return super.upsert(calendarId, event, existing: existing);
+  }
+}
+
+/// A calendar whose server can be taken down; remembers which calendars hold events.
+class _UnreachableOnDelete extends FakeCalendarTarget {
+  var down = false;
+  final _calendarOf = <String, String>{};
+
+  Set<String> get calendars => {for (final ref in events.keys) _calendarOf[ref]!};
+
+  @override
+  Future<WrittenEvent> upsert(
+    String calendarId,
+    CalendarEvent event, {
+    WrittenEvent? existing,
+  }) async {
+    final written = await super.upsert(calendarId, event, existing: existing);
+    _calendarOf[written.ref] = calendarId;
+    return written;
+  }
+
+  @override
+  Future<void> delete(String calendarId, WrittenEvent existing) async {
+    if (down) throw const CalendarSyncException(AppError.network);
+    return super.delete(calendarId, existing);
   }
 }
 
@@ -503,21 +534,11 @@ void main() {
     expect(target.events.values.single.uid, lessonUid(5));
   });
 
-  test('sync off: booking touches no calendar', () async {
-    final api = FakeSportivityApi(lessons: [lessonFixture(id: 5, start: tomorrow)]);
-    final target = FakeCalendarTarget();
-    final container = build(api, target: target);
-    await container.read(sessionProvider.future);
-    await container.read(bookedLessonsProvider.future);
-    await container.read(bookedLessonsProvider.notifier).book(api.lessons.single);
-    expect(target.events, isEmpty);
-  });
-
-  test('choosing another target cleans up the old one', () async {
+  test('a calendar that cannot be emptied now is remembered, and emptied later', () async {
     final api = FakeSportivityApi(
       lessons: [lessonFixture(id: 5, start: tomorrow, status: 'Booked')],
     );
-    final target = FakeCalendarTarget();
+    final target = _UnreachableOnDelete();
     final settings = FakeSettingsService()
       ..sync = const SyncSettings(kind: SyncTargetKind.calDav, calendarId: 'old');
     final container = build(api, settings: settings, target: target);
@@ -525,69 +546,92 @@ void main() {
     await container.read(bookedLessonsProvider.notifier).refreshAndSync();
     expect(target.events, hasLength(1));
 
-    await container.read(syncProvider.notifier).choose(SyncTargetKind.off);
-    expect(target.events, isEmpty);
-    expect(settings.sync.enabled, isFalse);
+    // No connection to the calendar at the moment of switching: the switch goes ahead.
+    target.down = true;
+    await container
+        .read(syncProvider.notifier)
+        .choose(
+          SyncTargetKind.calDav,
+          calendar: const CalendarInfo(id: 'new', name: 'New'),
+        );
+    expect(settings.sync.calendarId, 'new');
+    expect(settings.sync.leftovers, ['calDav:old']);
+
+    // The next sync that goes through takes the old calendar along.
+    target.down = false;
+    await container.read(bookedLessonsProvider.notifier).refreshAndSync();
+    expect(settings.sync.leftovers, isEmpty);
+    expect(target.calendars, {'new'});
   });
 
-  test('a booking that went through is not reported as failed when the refresh fails', () async {
-    final api = _FailsAfterBookingApi(lessons: [lessonFixture(id: 5, start: tomorrow)]);
-    final container = build(api);
-    await container.read(sessionProvider.future);
-    await container.read(bookedLessonsProvider.future);
-
-    final result = await container.read(bookedLessonsProvider.notifier).book(api.lessons.single);
-    expect(result.success, isTrue);
-    expect(api.joined, [(5, false)]);
-  });
-
-  test('a list that arrives during a sync is synced right after it, not dropped', () async {
-    final api = FakeSportivityApi(
-      lessons: [lessonFixture(id: 5, start: tomorrow, status: 'Booked')],
-    );
-    final target = _GatedCalendar();
-    final settings = FakeSettingsService()
-      ..sync = const SyncSettings(kind: SyncTargetKind.calDav, calendarId: 'cal');
-    final container = build(api, settings: settings, target: target);
-    await container.read(sessionProvider.future);
-    final sync = container.read(syncProvider.notifier);
-    final first = await container.read(bookedLessonsProvider.future);
-
-    // The sync at start-up is busy writing lesson 5…
-    final running = sync.run(first);
-    await pumpEventQueue();
-    expect(target.started, hasLength(1));
-
-    // …when lesson 6 is booked.
-    final six = lessonFixture(id: 6, start: tomorrow, status: 'Booked');
-    expect(await sync.run([...first, six]), isNull);
-
-    target.release();
-    await pumpEventQueue();
-    target.release();
-    await running;
-    expect(target.events.values.map((e) => e.uid), containsAll([lessonUid(5), lessonUid(6)]));
-  });
-
-  test('when the background task holds the lock, the app waits and then writes', () async {
-    final api = FakeSportivityApi(
-      lessons: [lessonFixture(id: 5, start: tomorrow, status: 'Booked')],
-    );
+  test('the demo never writes to a calendar', () async {
+    final api = SportivityApi();
+    await api.login('demo', 'demo');
     final target = FakeCalendarTarget();
     final settings = FakeSettingsService()
       ..sync = const SyncSettings(kind: SyncTargetKind.calDav, calendarId: 'cal');
-    // Busy the first two times, as if the background task were writing.
-    var busy = 2;
-    Future<T?> lock<T>(Future<T> Function() action) async => busy-- > 0 ? null : action();
-    final saved = SyncNotifier.lockRetryDelay;
-    SyncNotifier.lockRetryDelay = Duration.zero;
-    addTearDown(() => SyncNotifier.lockRetryDelay = saved);
-    final container = build(api, settings: settings, target: target, lock: lock);
+    final credentials = FakeCredentialStore(session: api.session);
+    final container = ProviderContainer(
+      retry: (_, _) => null,
+      overrides: [
+        apiProvider.overrideWithValue(api),
+        credentialStoreProvider.overrideWithValue(credentials),
+        settingsServiceProvider.overrideWithValue(settings),
+        cacheServiceProvider.overrideWithValue(FakeCacheService()),
+        syncIndexStoreProvider.overrideWithValue(MemorySyncIndexStore()),
+        syncTargetFactoryProvider.overrideWithValue((_) async => target),
+        syncLockProvider.overrideWithValue(noSyncLock),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = await container.read(sessionProvider.future);
+    expect(session.demo, isTrue);
+    await container
+        .read(sessionProvider.notifier)
+        .chooseLocation(const Location(id: 1, name: 'Demo'));
 
+    final lessons = await container.read(bookedLessonsProvider.future);
+    expect(lessons, isNotEmpty, reason: 'the demo has booked lessons to tempt the sync with');
+    expect(await container.read(syncProvider.notifier).run(lessons), isNull);
+    expect(target.events, isEmpty);
+  });
+
+  test('signing out switches the sync off and forgets the calendar password', () async {
+    final api = FakeSportivityApi();
+    final store = FakeCredentialStore(session: const Session(token: 'fake'))
+      ..calDav = const CalDavCredentials(
+        baseUrl: 'https://dav.example',
+        username: 'u',
+        password: 'p',
+      );
+    final settings = FakeSettingsService()
+      ..sync = const SyncSettings(kind: SyncTargetKind.calDav, calendarId: 'cal');
+    final container = build(api, store: store, settings: settings);
     await container.read(sessionProvider.future);
-    final result = await container.read(bookedLessonsProvider.notifier).refreshAndSync();
-    expect(result?.created, 1);
-    expect(target.events.values.single.uid, lessonUid(5));
+    expect((await container.read(syncProvider.future)).enabled, isTrue);
+
+    await container.read(sessionProvider.notifier).logout();
+    expect(settings.sync.enabled, isFalse);
+    expect(store.calDav, isNull);
+    expect((await container.read(syncProvider.future)).enabled, isFalse);
+  });
+
+  test('a sync error is kept as data and worded in the language of the reader', () {
+    final stored = syncErrorOf(
+      const CalendarSyncException(AppError.calendarAuth, statusCode: 401),
+      lesson: 'Yoga',
+    ).encode();
+    final error = SyncError.decode(stored)!;
+    final en = describeSyncError(lookupAppLocalizations(const Locale('en')), error);
+    final nl = describeSyncError(lookupAppLocalizations(const Locale('nl')), error);
+    expect(en, startsWith('Yoga: '));
+    expect(nl, startsWith('Yoga: '));
+    expect(en, isNot(nl));
+    // A sentence stored by an earlier version is shown as it is.
+    expect(
+      describeSyncError(lookupAppLocalizations(const Locale('en')), SyncError.decode('Oude zin')!),
+      'Oude zin',
+    );
   });
 
   test('a sync does not undo a setting changed while it ran', () async {

@@ -11,6 +11,7 @@ class SettingsService {
   static const _keySyncReminder = 'syncReminderMinutes';
   static const _keySyncLastRun = 'syncLastRun';
   static const _keySyncLastError = 'syncLastError';
+  static const _keySyncLeftovers = 'syncLeftovers';
 
   Future<IsolatedBox<dynamic>> _openBox() => openStorageBox(_boxName);
 
@@ -41,7 +42,11 @@ class SettingsService {
       calendarName: await box.get(_keySyncCalendarName) as String?,
       reminderMinutes: await box.get(_keySyncReminder) as int?,
       lastRun: lastRun == null ? null : DateTime.tryParse(lastRun),
-      lastError: await box.get(_keySyncLastError) as String?,
+      lastError: SyncError.decode(await box.get(_keySyncLastError)),
+      leftovers: switch (await box.get(_keySyncLeftovers)) {
+        final List<Object?> list => list.whereType<String>().toList(),
+        _ => const [],
+      },
     );
   }
 
@@ -53,7 +58,8 @@ class SettingsService {
       _keySyncCalendarName: settings.calendarName,
       _keySyncReminder: settings.reminderMinutes,
       _keySyncLastRun: settings.lastRun?.toIso8601String(),
-      _keySyncLastError: settings.lastError,
+      _keySyncLastError: settings.lastError?.encode(),
+      _keySyncLeftovers: settings.leftovers,
     });
   }
 }

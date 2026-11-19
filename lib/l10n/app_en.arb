@@ -75,7 +75,7 @@
   "moreLocation": "Change location",
   "moreLogout": "Sign out",
   "logoutConfirmTitle": "Sign out?",
-  "logoutConfirmBody": "Your stored password and the offline copy of your lessons are removed from this device. Events that are already in your calendar stay there.",
+  "logoutConfirmBody": "Your stored password and the offline copy of your lessons are removed from this device. Calendar sync is switched off; events that are already in your calendar stay there.",
   "moreAbout": "About this app",
   "listEmpty": "Nothing to show.",
   "invoiceOpen": "Open PDF",
@@ -119,6 +119,8 @@
   "syncLastRun": "Last sync",
   "syncNever": "Never",
   "syncExplain": "One way: your booked lessons appear in the calendar and disappear when cancelled. The app only touches events it created itself.",
+  "syncDemoNote": "The demo does not write to your calendar.",
+  "syncFailing": "The last sync failed",
   "syncWebNeedsProxy": "In the browser CalDAV only works if this site's administrator configured a Nextcloud server.",
   "syncResult": "{created} new, {updated} updated, {deleted} removed",
   "@syncResult": {

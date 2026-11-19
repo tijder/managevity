@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/location.dart';
+import '../models/sync_settings.dart';
 import '../services/credential_store.dart';
 import 'services.dart';
+import 'sync_provider.dart';
 
 class SessionState {
   const SessionState({this.loggedIn = false, this.location, this.demo = false});
@@ -84,6 +86,15 @@ class SessionNotifier extends AsyncNotifier<SessionState> {
     await ref.read(credentialStoreProvider).clearLogin();
     await ref.read(settingsServiceProvider).clearLocation();
     await ref.read(cacheServiceProvider).clear();
+    // The calendar sync belongs to whoever set it up: switched off, and the calendar
+    // password gone, so that the next person to sign in here does not write into it (or
+    // have their lessons mistaken for cancelled ones). Events already written stay; so
+    // does the index, in case the same person comes back to the same calendar.
+    final settings = ref.read(settingsServiceProvider);
+    final sync = await settings.getSync();
+    await settings.setSync(SyncSettings(leftovers: sync.leftovers));
+    await ref.read(credentialStoreProvider).clearCalDav();
+    ref.invalidate(syncProvider);
     state = const AsyncData(SessionState());
   }
 }

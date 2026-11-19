@@ -9,6 +9,7 @@ import '../utils/errors.dart';
 import '../models/sync_settings.dart';
 import '../providers/lessons_provider.dart';
 import '../providers/services.dart';
+import '../providers/session_provider.dart';
 import '../providers/sync_provider.dart';
 import '../services/calendar/calendar_sync_target.dart';
 import '../services/credential_store.dart';
@@ -124,6 +125,14 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
             padding: 16,
             children: [
               Text(l10n.syncExplain),
+              if (ref.watch(sessionProvider).value?.demo ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    l10n.syncDemoNote,
+                    style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  ),
+                ),
               const SizedBox(height: 16),
               Text(l10n.syncTarget, style: Theme.of(context).textTheme.titleMedium),
               RadioGroup<SyncTargetKind>(
@@ -248,9 +257,9 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                     ],
                   ),
                 ),
-                if (settings.lastError != null)
+                if (settings.lastError case final error?)
                   Text(
-                    settings.lastError!,
+                    describeSyncError(l10n, error),
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 const SizedBox(height: 12),

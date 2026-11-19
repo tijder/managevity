@@ -33,7 +33,8 @@ abstract interface class CredentialStore {
   Future<void> writeCalDav(CalDavCredentials credentials);
   Future<void> clearCalDav();
 
-  /// Logging out: login and session are removed. The CalDAV credentials stay.
+  /// Logging out: login and session are removed. (The session notifier removes the CalDAV
+  /// credentials as well, through [clearCalDav].)
   Future<void> clearLogin();
 }
 
