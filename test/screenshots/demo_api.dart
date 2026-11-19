@@ -83,6 +83,9 @@ class DemoApi extends FakeSportivityApi {
         spots: 0,
       ),
       at(6, 0, 20, 'Judo for adults', 'Judo', 'Ruben Smith', 'Dojo', '#5C4B99', spots: 20, max: 24),
+      // Tomorrow and later: what the lesson pages show, so their buttons do not depend on
+      // the time of day the screenshots are made.
+      at(11, 1, 19, 'Spinning 45', 'Spinning', 'Tom Baker', 'Cycle studio', '#2E86AB', spots: 6),
       at(7, 2, 19, 'Bodypump', 'Strength', 'Lisa Fisher', 'Studio 1', '#F2A541', status: 'Booked'),
       at(8, 5, 20, 'Judo for adults', 'Judo', 'Ruben Smith', 'Dojo', '#5C4B99', status: 'Booked'),
       at(9, -12, 20, 'Judo for adults', 'Judo', 'Ruben Smith', 'Dojo', '#5C4B99', status: 'Booked'),
