@@ -231,6 +231,24 @@ abstract class AppLocalizations {
   /// **'All'**
   String get scheduleFilterAll;
 
+  /// No description provided for @scheduleEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 earlier lesson} other{{count} earlier lessons}}'**
+  String scheduleEarlier(int count);
+
+  /// No description provided for @scheduleNoMoreToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No more lessons today.'**
+  String get scheduleNoMoreToday;
+
+  /// No description provided for @schedulePickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Other date'**
+  String get schedulePickDate;
+
   /// No description provided for @myLessonsEmpty.
   ///
   /// In en, this message translates to:

@@ -23,6 +23,16 @@
   "scheduleEmpty": "No lessons on this day.",
   "scheduleFilter": "Filter by activity",
   "scheduleFilterAll": "All",
+  "scheduleEarlier": "{count, plural, =1{1 earlier lesson} other{{count} earlier lessons}}",
+  "@scheduleEarlier": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scheduleNoMoreToday": "No more lessons today.",
+  "schedulePickDate": "Other date",
   "myLessonsEmpty": "You have no booked lessons.",
   "lessonBook": "Book",
   "lessonJoinWaitingList": "Join waiting list",

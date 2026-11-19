@@ -80,6 +80,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduleFilterAll => 'All';
 
   @override
+  String scheduleEarlier(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count earlier lessons',
+      one: '1 earlier lesson',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scheduleNoMoreToday => 'No more lessons today.';
+
+  @override
+  String get schedulePickDate => 'Other date';
+
+  @override
   String get myLessonsEmpty => 'You have no booked lessons.';
 
   @override

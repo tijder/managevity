@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:managevity/models/lesson.dart';
 import 'package:managevity/providers/session_provider.dart';
 import 'package:managevity/screens/schedule_screen.dart';
@@ -16,14 +17,16 @@ void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
   final noon = addDays(DateTime.now(), 0, hour: 12);
+  // Already started at whatever time the tests run (short of the first minute of the day).
+  final early = DateTime(noon.year, noon.month, noon.day);
   // Still to come at whatever time the tests run (short of the last minute of the day).
   final late = DateTime(noon.year, noon.month, noon.day, 23, 59);
 
   testWidgets("shows today's lessons with their status", (tester) async {
     final api = FakeSportivityApi(
       lessons: [
-        lessonFixture(id: 1, description: 'Yoga', start: noon, status: 'Booked'),
-        lessonFixture(id: 2, description: 'Spinning', start: noon, spots: 0, activity: 'Spinning'),
+        lessonFixture(id: 1, description: 'Yoga', start: late, status: 'Booked'),
+        lessonFixture(id: 2, description: 'Spinning', start: late, spots: 0, activity: 'Spinning'),
         lessonFixture(id: 3, description: 'Not until tomorrow', start: addDays(noon, 1, hour: 12)),
       ],
     );
@@ -44,8 +47,8 @@ void main() {
           Lesson.tryFromJson({
             '_id': id,
             'Description': 'Lesson $id',
-            'UTCStartTime': noon.toUtc().toIso8601String(),
-            'UTCEndTime': noon.add(const Duration(hours: 1)).toUtc().toIso8601String(),
+            'UTCStartTime': late.toUtc().toIso8601String(),
+            'UTCEndTime': late.add(const Duration(hours: 1)).toUtc().toIso8601String(),
             'SpotsInt': going,
             'MaximumParticipants': 24,
             'Full': false,
@@ -63,8 +66,8 @@ void main() {
   testWidgets('filters by activity', (tester) async {
     final api = FakeSportivityApi(
       lessons: [
-        lessonFixture(id: 1, description: 'Yin yoga', start: noon),
-        lessonFixture(id: 2, description: 'Spinning 45', start: noon, activity: 'Spinning'),
+        lessonFixture(id: 1, description: 'Yin yoga', start: late),
+        lessonFixture(id: 2, description: 'Spinning 45', start: late, activity: 'Spinning'),
       ],
     );
     await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
@@ -142,6 +145,59 @@ void main() {
       expect(find.text('Yin yoga'), findsOneWidget);
       expect(api.scheduleCalls, hasLength(calls));
     });
+  });
+
+  testWidgets('lessons that have started are folded away behind a button', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [
+        lessonFixture(id: 1, description: 'Early bird', start: early),
+        lessonFixture(id: 2, description: 'Night owl', start: late),
+      ],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+    expect(find.text('Night owl'), findsOneWidget);
+    expect(find.text('Early bird'), findsNothing);
+
+    await tester.tap(find.text('1 earlier lesson'));
+    await tester.pumpAndSettle();
+    expect(find.text('Early bird'), findsOneWidget);
+  });
+
+  testWidgets('when everything today has started, it says so', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(description: 'Early bird', start: early)],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+    expect(find.text('No more lessons today.'), findsOneWidget);
+    expect(find.text('1 earlier lesson'), findsOneWidget);
+  });
+
+  testWidgets('a date beyond the buttons can be picked, and the picker then shows it', (
+    tester,
+  ) async {
+    final far = addDays(DateTime.now(), 20, hour: 19);
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(description: 'Far away', start: far)],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Other date'));
+    await tester.pumpAndSettle();
+    // Typed rather than tapped: which month the calendar opens on depends on today.
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), DateFormat.yMd('en').format(far));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Far away'), findsOneWidget);
+    final chip = tester.widget<ChoiceChip>(
+      find.widgetWithText(ChoiceChip, DateFormat.MMMEd('en').format(far)),
+    );
+    expect(chip.selected, isTrue);
   });
 
   testWidgets('empty day', (tester) async {
