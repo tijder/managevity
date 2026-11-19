@@ -28,6 +28,7 @@
   "scheduleEarlier": "{count, plural, =1{1 eerdere les} other{{count} eerdere lessen}}",
   "scheduleNoMoreToday": "Vandaag geen lessen meer.",
   "schedulePickDate": "Andere datum",
+  "scheduleNextLesson": "Je volgende les",
   "myLessonsEmpty": "Je hebt geen lessen geboekt.",
   "lessonBook": "Boeken",
   "lessonJoinWaitingList": "Op de wachtlijst",

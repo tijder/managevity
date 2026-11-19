@@ -35,6 +35,7 @@
   },
   "scheduleNoMoreToday": "No more lessons today.",
   "schedulePickDate": "Other date",
+  "scheduleNextLesson": "Your next lesson",
   "myLessonsEmpty": "You have no booked lessons.",
   "lessonBook": "Book",
   "lessonJoinWaitingList": "Join waiting list",

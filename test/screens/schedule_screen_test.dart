@@ -205,6 +205,40 @@ void main() {
     expect(chip.selected, isTrue);
   });
 
+  testWidgets('the first lesson you are booked for is on top of today', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [
+        lessonFixture(id: 1, description: 'Night owl', start: late),
+        lessonFixture(
+          id: 2,
+          description: 'Later this week',
+          start: addDays(now, 3, hour: 19),
+          status: 'Booked',
+        ),
+        lessonFixture(
+          id: 3,
+          description: 'Tomorrow yoga',
+          start: addDays(now, 1, hour: 19),
+          status: 'Booked',
+        ),
+      ],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+    expect(find.text('Your next lesson'), findsOneWidget);
+    expect(find.textContaining('Tomorrow yoga'), findsOneWidget);
+    expect(find.textContaining('Later this week'), findsNothing);
+  });
+
+  testWidgets('nothing booked: no "next lesson"', (tester) async {
+    final api = FakeSportivityApi(
+      lessons: [lessonFixture(description: 'Night owl', start: late)],
+    );
+    await tester.pumpWidget(testApp(const _WithSession(child: ScheduleScreen()), api: api));
+    await tester.pumpAndSettle();
+    expect(find.text('Your next lesson'), findsNothing);
+  });
+
   testWidgets('empty day', (tester) async {
     await tester.pumpWidget(
       testApp(const _WithSession(child: ScheduleScreen()), api: FakeSportivityApi()),

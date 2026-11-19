@@ -103,6 +103,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get schedulePickDate => 'Andere datum';
 
   @override
+  String get scheduleNextLesson => 'Je volgende les';
+
+  @override
   String get myLessonsEmpty => 'Je hebt geen lessen geboekt.';
 
   @override

@@ -261,6 +261,12 @@ abstract class AppLocalizations {
   /// **'Other date'**
   String get schedulePickDate;
 
+  /// No description provided for @scheduleNextLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Your next lesson'**
+  String get scheduleNextLesson;
+
   /// No description provided for @myLessonsEmpty.
   ///
   /// In en, this message translates to:

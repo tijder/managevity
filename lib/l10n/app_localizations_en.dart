@@ -103,6 +103,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get schedulePickDate => 'Other date';
 
   @override
+  String get scheduleNextLesson => 'Your next lesson';
+
+  @override
   String get myLessonsEmpty => 'You have no booked lessons.';
 
   @override

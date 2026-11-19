@@ -112,6 +112,16 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
   Riverpod forbids changing one provider while another is being built. Only
   `SportivityException.isUnreachable` (no connection, or 502/503/504 from the proxy) counts
   as offline; a server error or a refused token stays an error.
+- **Time**: the current time is always `clock.now()` (`package:clock`), never
+  `DateTime.now()`, so tests and the screenshots can run at a fixed moment (`withClock`).
+  `Lesson.start`/`end` are on the **gym's clock** when the list said what that reads
+  (`LessonStartTime`), otherwise on the device's; a single lesson (`LessonById`) lacks it
+  and takes it over from the list (`keepingGymTimeOf`). "Is it over" and the calendar use
+  the UTC instants.
+- **Sync, who and where**: the demo never syncs. Signing out switches the sync off and
+  removes the CalDAV password (events stay, the index too). A calendar the sync moved away
+  from but could not empty is kept in `SyncSettings.leftovers` and emptied after a later
+  sync. The last error is stored as data (`SyncError`) and worded by `describeSyncError`.
 - **Dates**: a day further is `addDays` (calendar arithmetic), never
   `.add(Duration(days: n))` — across the end of summer time that lands on 23:00 the same
   day. CI runs the tests with `TZ=Europe/Amsterdam` for this reason.

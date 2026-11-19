@@ -73,6 +73,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     // A day that has passed has no button any more; without this nothing would be selected.
     if (_day.isBefore(today)) _day = today;
     final lessons = ref.watch(scheduleProvider(_day));
+    // What most visits are for: when do I have to be there? Only from a list that loaded;
+    // while it loads or when it fails, the schedule simply starts at the top.
+    final next = ref
+        .watch(bookedLessonsProvider)
+        .value
+        ?.where((l) => l.bookingStatus.isMine && !l.hasStarted)
+        .fold<Lesson?>(null, (a, b) => a == null || b.startUtc.isBefore(a.startUtc) ? b : a);
 
     Future<void> refresh() => refreshSchedule(ref, _day);
 
@@ -149,6 +156,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             return ResponsiveListView(
               maxWidth: 1200,
               children: [
+                if (_day == today && next != null)
+                  _NextLesson(
+                    lesson: next,
+                    today: today,
+                    onTap: () => openLesson(context, ref, next),
+                  ),
                 if (activities.length > 1)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
@@ -193,6 +206,50 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// The first lesson you are booked for, above today's schedule.
+class _NextLesson extends StatelessWidget {
+  const _NextLesson({required this.lesson, required this.today, required this.onTap});
+
+  final Lesson lesson;
+  final DateTime today;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final day = dayOf(lesson.start) == today
+        ? l10n.today
+        : DateFormat.MMMEd(locale).format(lesson.start);
+    final where = [lesson.room, if (lesson.bookingStatus.isWaitingList) l10n.lessonWaitingList];
+    return Card(
+      color: scheme.secondaryContainer,
+      clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+      child: ListTile(
+        leading: Icon(Icons.event_available, color: scheme.onSecondaryContainer),
+        title: Text(
+          l10n.scheduleNextLesson,
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: scheme.onSecondaryContainer),
+        ),
+        subtitle: Text(
+          [
+            '$day ${DateFormat.Hm(locale).format(lesson.start)}',
+            lesson.description,
+            ...where.nonNulls,
+          ].join(' · '),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(color: scheme.onSecondaryContainer),
+        ),
+        trailing: Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
+        onTap: onTap,
       ),
     );
   }
