@@ -232,6 +232,9 @@ class _InvoiceList extends StatelessWidget {
     // The location is only information when there is more than one.
     final showLocation = {for (final i in invoices) i.location}.length > 1;
     final narrow = MediaQuery.sizeOf(context).width < 480;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final date = DateFormat.yMMMd(locale);
+    final money = NumberFormat.simpleCurrency(locale: locale, name: 'EUR');
 
     final children = <Widget>[];
     int? year;
@@ -269,7 +272,15 @@ class _InvoiceList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(invoice.date ?? '', style: theme.textTheme.titleMedium),
+                        Text(
+                          // In the reader's own notation; the server's text only when it
+                          // cannot be read as a date.
+                          switch (invoice.dateValue) {
+                            final d? => date.format(d),
+                            null => invoice.date ?? '',
+                          },
+                          style: theme.textTheme.titleMedium,
+                        ),
                         Text(
                           [invoice.number, if (showLocation) invoice.location].nonNulls.join(' · '),
                           style: theme.textTheme.bodySmall,
@@ -280,7 +291,10 @@ class _InvoiceList extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(invoice.amount ?? '', style: theme.textTheme.titleMedium),
+                      Text(switch (invoice.amountValue) {
+                        final a? => money.format(a),
+                        null => invoice.amount ?? '',
+                      }, style: theme.textTheme.titleMedium),
                       Text(
                         isOpen ? l10n.invoiceStatusOpen : invoice.status ?? l10n.invoiceStatusPaid,
                         style: theme.textTheme.labelMedium?.copyWith(

@@ -62,8 +62,17 @@ void main() {
     await pump(tester, [invoice(3, '27-08-2026', status: 'Open'), invoice(2, '30-07-2026')]);
     await tester.tap(find.widgetWithText(SegmentedButton<bool>, 'Outstanding'));
     await tester.pumpAndSettle();
-    expect(find.text('27-08-2026'), findsOneWidget);
-    expect(find.text('30-07-2026'), findsNothing);
+    expect(find.text('Aug 27, 2026'), findsOneWidget);
+    expect(find.text('Jul 30, 2026'), findsNothing);
+  });
+
+  testWidgets('date and amount are written the way the reader writes them', (tester) async {
+    await pump(tester, [invoice(2, '30-07-2026')]);
+    await tester.pumpAndSettle();
+    // The server sends "30-07-2026" and "€ 70,00" whatever the language.
+    expect(find.text('Jul 30, 2026'), findsOneWidget);
+    expect(find.text('€70.00'), findsWidgets);
+    expect(find.text('€ 70,00'), findsNothing);
   });
 
   testWidgets('nothing outstanding: it says so, under the filter too', (tester) async {
@@ -71,7 +80,7 @@ void main() {
     expect(find.text('Everything is paid.'), findsOneWidget);
     await tester.tap(find.text('Outstanding'));
     await tester.pumpAndSettle();
-    expect(find.text('30-07-2026'), findsNothing);
+    expect(find.text('Jul 30, 2026'), findsNothing);
     expect(find.text('Everything is paid.'), findsNWidgets(2));
   });
 }

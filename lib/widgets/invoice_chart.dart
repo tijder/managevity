@@ -93,10 +93,13 @@ class InvoiceChart extends StatelessWidget {
                     '${d.open > 0 ? '\n${l10n.invoiceChartOpen}: ${money.format(d.open)}' : ''}',
                 monthLabel: (i) {
                   final month = data[i].month;
-                  // With many bars only every other month gets a label, plus January with
-                  // the year so that a change of year is visible.
-                  if (data.length > 8 && i.isOdd && month.month != 1) return '';
-                  return month.month == 1
+                  // With many bars only every other one gets a label. The year goes on the
+                  // first label of a new year — not always January: a label squeezed in
+                  // between its neighbours runs into them.
+                  final every = data.length > 8 ? 2 : 1;
+                  if (i % every != 0) return '';
+                  final newYear = i >= every && data[i - every].month.year != month.year;
+                  return newYear
                       ? DateFormat("MMM ''yy", locale).format(month)
                       : DateFormat.MMM(locale).format(month);
                 },
