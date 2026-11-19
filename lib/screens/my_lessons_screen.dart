@@ -56,11 +56,11 @@ class _MyLessonsScreenState extends ConsumerState<MyLessonsScreen> {
         children: [
           // In the same column as the cards below, and no wider than it needs to be: across
           // a desktop window two segments of 600 pixels each are not a switch any more.
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final side = ((constraints.maxWidth - 1200) / 2).clamp(12.0, double.infinity) + 4;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(side, 8, side, 0),
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: ConstrainedBox(
@@ -79,8 +79,8 @@ class _MyLessonsScreenState extends ConsumerState<MyLessonsScreen> {
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           Expanded(
             child: Refreshable(

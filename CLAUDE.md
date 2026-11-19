@@ -9,7 +9,7 @@ Code, comments, tests and docs are English, and the localization template is
 ## Commands
 
 ```sh
-flutter pub get
+flutter pub get                                           # CI's exact Flutter: .flutter-version
 flutter gen-l10n                                          # after every change in lib/l10n/*.arb
 dart run build_runner build --delete-conflicting-outputs  # after a change in routes/@RoutePage
 flutter analyze
@@ -82,6 +82,19 @@ Layer-first: `lib/{models,services,providers,router,screens,widgets,utils,l10n}`
   own in case the server shortens the range). Details of booked lessons stay in the cache
   for a day, details of past lessons permanently (`PastLessonDetails`, fetched per card as
   it comes into view).
+- **The schedule day does not watch its week** (`scheduleProvider` reads
+  `scheduleWeekProvider` with `ref.read`, so a week arriving later does not reload the day).
+  Whoever invalidates the week must invalidate the day too (`refreshSchedule`,
+  `_afterChange`), or the screen keeps the old list. A day waits for a week that is already
+  on its way instead of fetching next to it.
+- **Coming back to the app** (`widgets/resume_refresh.dart`, around the main screen): after
+  ten minutes away the schedule, the busyness charts and the booked lessons (with the
+  calendar) are fetched again. Not on every return.
+- **Lesson page**: a tapped card goes through `openLesson`, which leaves the lesson in
+  `lessonPreviewsProvider`; the page draws that at once and `lessonProvider` falls back on
+  it (or on the stored booked details) when the server is unreachable. The URL stays just
+  the id. The button is disabled until the full lesson is in: a status from a list may be
+  old. A lesson that `hasStarted` can be neither booked nor cancelled.
 - **Errors** carry an `AppError` code, not a sentence; `describeError` in `utils/errors.dart`
   turns it into text in the user's language. What the server itself says takes precedence.
   Never show `'$e'`.
