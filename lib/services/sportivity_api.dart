@@ -143,9 +143,11 @@ class SportivityApi {
         statusCode: asInt(body['HttpStatusCode']),
       );
     }
-    // Which form of the header the server wants is documented nowhere: try them. A rejected
-    // token comes back as HTTP 200 with an error message in the body, so the body decides.
-    for (final scheme in AuthScheme.values) {
+    // Which form of the header the server wants is documented nowhere. Bearer first: that is
+    // what the real server took (probe, 22-09-2026), so a login costs one check instead of
+    // two; the bare token stays as a fallback. A rejected token comes back as HTTP 200 with
+    // an error message in the body, so the body decides.
+    for (final scheme in const [AuthScheme.bearer, AuthScheme.raw]) {
       final candidate = Session(token: token, scheme: scheme);
       final response = await _dio.get<Object?>(
         'UserContent',
