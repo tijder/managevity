@@ -23,6 +23,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _password = TextEditingController();
   bool _remember = !kIsWeb;
   bool _busy = false;
+  bool _sending = false;
+  bool _showPassword = false;
   String? _error;
 
   @override
@@ -59,11 +61,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       messenger.showSnackBar(SnackBar(content: Text(l10n.loginForgotNeedsUser)));
       return;
     }
+    // One mail per tap: the answer takes a moment, and a second tap would send another.
+    setState(() => _sending = true);
     try {
       final message = await ref.read(apiProvider).forgotPassword(_user.text.trim());
       messenger.showSnackBar(SnackBar(content: Text(message ?? l10n.loginForgotSent)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(describeError(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -103,8 +109,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _password,
-                        decoration: InputDecoration(labelText: l10n.loginPassword),
-                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: l10n.loginPassword,
+                          // A mistyped password is otherwise only found out by the server.
+                          suffixIcon: IconButton(
+                            tooltip: _showPassword
+                                ? l10n.loginHidePassword
+                                : l10n.loginShowPassword,
+                            icon: Icon(
+                              _showPassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            onPressed: () => setState(() => _showPassword = !_showPassword),
+                          ),
+                        ),
+                        obscureText: !_showPassword,
                         autofillHints: const [AutofillHints.password],
                         onFieldSubmitted: (_) => _submit(),
                         validator: (v) => v == null || v.isEmpty ? l10n.fieldRequired : null,
@@ -135,7 +155,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               )
                             : Text(l10n.loginButton),
                       ),
-                      TextButton(onPressed: _forgot, child: Text(l10n.loginForgot)),
+                      TextButton(
+                        onPressed: _sending ? null : _forgot,
+                        child: Text(l10n.loginForgot),
+                      ),
                       TextButton.icon(
                         onPressed: () => context.router.push(const AboutRoute()),
                         icon: const Icon(Icons.info_outline, size: 18),

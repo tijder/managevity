@@ -122,6 +122,24 @@ void main() {
     await _cleanup();
   });
 
+  testWidgets('signing out asks first, and only then signs out', (tester) async {
+    await pumpApp(tester, url: '/more');
+    await tester.scrollUntilVisible(find.text('Sign out'), 300);
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out?'), findsOneWidget);
+    await tester.tap(find.text('Back'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsNothing);
+
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign out'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
+    await _cleanup();
+  });
+
   testWidgets("the gym's own links are in More, and open outside the app", (tester) async {
     final opened = <Uri>[];
     final link = Uri.parse('https://example.org/timetable');

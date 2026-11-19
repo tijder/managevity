@@ -25,6 +25,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get loginPassword => 'Wachtwoord';
 
   @override
+  String get loginShowPassword => 'Wachtwoord tonen';
+
+  @override
+  String get loginHidePassword => 'Wachtwoord verbergen';
+
+  @override
   String get loginRemember => 'Ingelogd blijven';
 
   @override
@@ -213,6 +219,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get moreLogout => 'Uitloggen';
+
+  @override
+  String get logoutConfirmTitle => 'Uitloggen?';
+
+  @override
+  String get logoutConfirmBody =>
+      'Je opgeslagen wachtwoord en de offline kopie van je lessen worden van dit apparaat verwijderd. Afspraken die al in je agenda staan, blijven staan.';
 
   @override
   String get moreAbout => 'Over deze app';

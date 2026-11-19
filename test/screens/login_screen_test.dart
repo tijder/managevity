@@ -52,4 +52,20 @@ void main() {
     await tester.pump();
     expect(find.text('Enter your email or username first.'), findsOneWidget);
   });
+
+  testWidgets('the password can be shown to check it before signing in', (tester) async {
+    await tester.pumpWidget(
+      testApp(const LoginScreen(), api: FakeSportivityApi(), credentials: FakeCredentialStore()),
+    );
+    await tester.pumpAndSettle();
+    bool hidden() => tester.widget<EditableText>(find.byType(EditableText).last).obscureText;
+
+    expect(hidden(), isTrue);
+    await tester.tap(find.byTooltip('Show password'));
+    await tester.pump();
+    expect(hidden(), isFalse);
+    await tester.tap(find.byTooltip('Hide password'));
+    await tester.pump();
+    expect(hidden(), isTrue);
+  });
 }

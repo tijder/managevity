@@ -123,6 +123,18 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get loginPassword;
 
+  /// No description provided for @loginShowPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get loginShowPassword;
+
+  /// No description provided for @loginHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get loginHidePassword;
+
   /// No description provided for @loginRemember.
   ///
   /// In en, this message translates to:
@@ -482,6 +494,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out'**
   String get moreLogout;
+
+  /// No description provided for @logoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get logoutConfirmTitle;
+
+  /// No description provided for @logoutConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stored password and the offline copy of your lessons are removed from this device. Events that are already in your calendar stay there.'**
+  String get logoutConfirmBody;
 
   /// No description provided for @moreAbout.
   ///

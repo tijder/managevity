@@ -7,6 +7,7 @@ import '../providers/content_providers.dart';
 import '../providers/services.dart';
 import '../providers/session_provider.dart';
 import '../router/app_router.dart';
+import '../widgets/confirm_action.dart';
 import '../widgets/customer_avatar.dart';
 import '../widgets/responsive.dart';
 
@@ -139,7 +140,16 @@ class MoreScreen extends ConsumerWidget {
             ListTile(
               leading: Icon(Icons.logout, color: scheme.error),
               title: Text(l10n.moreLogout, style: TextStyle(color: scheme.error)),
+              // Asked first: it sits at the bottom of a list you scroll with your thumb,
+              // and it throws away the stored password and the offline copy.
               onTap: () async {
+                final sure = await confirmAction(
+                  context,
+                  title: l10n.logoutConfirmTitle,
+                  lines: [l10n.logoutConfirmBody],
+                  confirmLabel: l10n.moreLogout,
+                );
+                if (!sure) return;
                 await ref.read(sessionProvider.notifier).logout();
                 router.replaceAll([const LoginRoute()]);
               },

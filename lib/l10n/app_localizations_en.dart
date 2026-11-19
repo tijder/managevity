@@ -25,6 +25,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginPassword => 'Password';
 
   @override
+  String get loginShowPassword => 'Show password';
+
+  @override
+  String get loginHidePassword => 'Hide password';
+
+  @override
   String get loginRemember => 'Stay signed in';
 
   @override
@@ -213,6 +219,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreLogout => 'Sign out';
+
+  @override
+  String get logoutConfirmTitle => 'Sign out?';
+
+  @override
+  String get logoutConfirmBody =>
+      'Your stored password and the offline copy of your lessons are removed from this device. Events that are already in your calendar stay there.';
 
   @override
   String get moreAbout => 'About this app';
