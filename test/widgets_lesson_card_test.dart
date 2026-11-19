@@ -36,4 +36,33 @@ void main() {
     await pump(tester, DateTime(thisYear - 1, 3, 5, 19));
     expect(find.textContaining('March 5, ${thisYear - 1}'), findsOneWidget);
   });
+
+  testWidgets('a screen reader gets the card as one button, with the activity in words', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: LessonCard(
+            // The name does not say what kind of lesson it is; only the colour did.
+            lesson: lessonFixture(
+              description: 'Monday special',
+              activity: 'Spinning',
+              start: DateTime(thisYear + 1, 3, 5, 19),
+              status: 'Booked',
+            ),
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+    final node = tester.getSemantics(find.byType(InkWell));
+    expect(node.label, allOf(contains('Monday special'), contains('Spinning'), contains('Booked')));
+    expect(node.flagsCollection.isButton, isTrue);
+    handle.dispose();
+  });
 }

@@ -18,56 +18,74 @@ class LessonCard extends StatelessWidget {
     final theme = Theme.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final time = DateFormat.Hm(locale);
-    final subtitle = [lesson.trainer, lesson.room].nonNulls.join(' · ');
+    // The colour of the strip says which activity it is; in words too when the name of the
+    // lesson does not, for whoever cannot tell the colours apart or does not see them.
+    final activity = lesson.activity;
+    final named =
+        activity == null || lesson.description.toLowerCase().contains(activity.toLowerCase());
+    final subtitle = [if (!named) activity, lesson.trainer, lesson.room].nonNulls.join(' · ');
 
-    // A lesson that has already started is still listed but is no longer in play.
-    final started = lesson.hasStarted;
+    // A lesson that has already started is still listed but is no longer in play: quieter,
+    // but in a colour that stays legible (fading the whole card did not).
+    final muted = lesson.hasStarted && !showDate ? theme.colorScheme.onSurfaceVariant : null;
+    final stripe = parseHexColor(lesson.color) ?? theme.colorScheme.primary;
 
-    return Opacity(
-      opacity: started && !showDate ? 0.55 : 1,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  width: 6,
-                  color: parseHexColor(lesson.color) ?? theme.colorScheme.primary,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showDate)
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      // One thing to a screen reader: "19:00 – 20:00, Yoga flow, Anna · Studio 2, Booked",
+      // announced as a button, rather than four loose fragments.
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onTap,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    width: 6,
+                    color: muted == null ? stripe : stripe.withValues(alpha: 0.5),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (showDate)
+                            Text(
+                              // The year only when it is not this year: otherwise "Monday 21
+                              // September" cannot be placed in the history.
+                              (lesson.start.year == DateTime.now().year
+                                      ? DateFormat.MMMMEEEEd(locale)
+                                      : DateFormat.yMMMMEEEEd(locale))
+                                  .format(lesson.start),
+                              style: theme.textTheme.labelMedium,
+                            ),
                           Text(
-                            // The year only when it is not this year: otherwise "Monday 21
-                            // September" cannot be placed in the history.
-                            (lesson.start.year == DateTime.now().year
-                                    ? DateFormat.MMMMEEEEd(locale)
-                                    : DateFormat.yMMMMEEEEd(locale))
-                                .format(lesson.start),
-                            style: theme.textTheme.labelMedium,
+                            '${time.format(lesson.start)} – ${time.format(lesson.end)}',
+                            style: theme.textTheme.labelLarge?.copyWith(color: muted),
                           ),
-                        Text(
-                          '${time.format(lesson.start)} – ${time.format(lesson.end)}',
-                          style: theme.textTheme.labelLarge,
-                        ),
-                        Text(lesson.description, style: theme.textTheme.titleMedium),
-                        if (subtitle.isNotEmpty) Text(subtitle, style: theme.textTheme.bodySmall),
-                      ],
+                          Text(
+                            lesson.description,
+                            style: theme.textTheme.titleMedium?.copyWith(color: muted),
+                          ),
+                          if (subtitle.isNotEmpty)
+                            Text(
+                              subtitle,
+                              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Center(child: _status(l10n, theme)),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Center(child: _status(l10n, theme)),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
