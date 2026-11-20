@@ -3,7 +3,7 @@
 #
 # The image does not build Flutter itself: build/web must already exist (tool/build-image.sh
 # locally, the web-build artifact in CI). That makes multi-arch free.
-FROM nginxinc/nginx-unprivileged:1.31.7-alpine
+FROM docker.io/nginx/nginx-unprivileged:1.31.9-alpine
 
 # The base image carries the Alpine packages of the build its tag points to, and
 # nginx does not rebuild it when Alpine ships a security fix. CVE-2026-111497
