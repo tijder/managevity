@@ -72,10 +72,9 @@ void main() {
 
   test('a full class puts you on the waiting list', () async {
     final location = (await api.locations()).single.id;
-    // Not a Sunday: the lunchtime class does not run then.
-    var day = addDays(today(), 1);
-    if (day.weekday == DateTime.sunday) day = addDays(day, 1);
-    final lessons = await api.schedule(location, day, addDays(day, 1));
+    // Several days: the lunchtime class does not run on Sundays, and the demo starts
+    // out on the waiting list of the one in two days.
+    final lessons = await api.schedule(location, addDays(today(), 1), addDays(today(), 5));
     final full = lessons.firstWhere((l) => l.full && !l.bookingStatus.isMine);
     expect(full.canUseWaitingList, isTrue);
 
